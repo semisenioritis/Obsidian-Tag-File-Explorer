@@ -1,9 +1,9 @@
 {
 	"id": "file-manager",
-	"name": "File Manager Plugin",
-	"version": "1.0.0",
+	"name": "File Manager",
+	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "File management plugin for obsidian.",
+	"description": "Nested tag based file management plugin for obsidian.",
 	"author": "Obsidian",
 	"authorUrl": "https://obsidian.md",
 	"fundingUrl": "https://obsidian.md/pricing",

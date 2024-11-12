@@ -11,6 +11,18 @@ interface TreeNode {
 	children?: TreeNode[];
   }
   
+type TagContents = {
+	childrenTags: string[];
+	files: FileDetails[];
+};
+type FileDetails = {
+	path: string;
+	name: string;
+	size: number | null;
+	created: Date | null;
+	modified: Date | null;
+};
+
 
 export default class MyPlugin extends Plugin {
   async onload() {
@@ -18,8 +30,8 @@ export default class MyPlugin extends Plugin {
 
     // Register the command to open the popup
     this.addCommand({
-      id: "open-popup",
-      name: "Open Popup",
+      id: "open-explorer",
+      name: "File Explorer",
       callback: () => {
         new MyPopupModal(this.app).open();
       },
@@ -32,6 +44,9 @@ export default class MyPlugin extends Plugin {
     
     // Optional: add a tooltip for the ribbon icon
     ribbonIconEl.setAttribute("aria-label", "Open Popup");
+
+
+
   }
 
   onunload() {
@@ -45,32 +60,328 @@ class MyPopupModal extends Modal {
     super(app);
   }
 
-  // Method to display search results in the modal
-	displaySearchResults(files: TFile[]) {
-		const { contentEl } = this;
 
-		// Clear previous search results if any
-		let resultsContainer = contentEl.querySelector(".results-container");
-		if (resultsContainer) {
-			resultsContainer.remove();
+
+	// Recursive function to get the entire folder structure with children as an array
+	// 🟣🟣🟣🟣🟣🟣🟣This function creates the structure of the physical folder structure
+	getFolderStructure(folder: TFolder): { name: string; children: any[]; files: string[] } {
+		// Collect all files in the current folder
+		const files = folder.children
+		.filter((child) => child instanceof TFile)
+		.map((file) => file.name);
+	
+		// Recursively collect all subfolders
+		const children = folder.children
+		.filter((child) => child instanceof TFolder)
+		.map((subFolder) => this.getFolderStructure(subFolder as TFolder));  // Recursive call for subfolders
+	
+		return {
+		name: folder.name,   // Folder's name
+		children,            // Recursively collected subfolders as an array
+		files,               // Direct files within the current folder
+		
+		};
+	}
+	
+	// Recursive function to add tags to the tree structure
+	// 🟣🟣🟣🟣🟣🟣🟣This function pulls the all the tags from the files and actually generates the tree	
+	addTagToTree(tree: any[], tagSegments: string[], filePath: string) {
+		// Remove '#' if it exists at the beginning of the first segment
+		const currentSegment = tagSegments[0].startsWith("#") ? tagSegments[0].substring(1) : tagSegments[0];
+	
+		// Find or create the current segment in the tree
+		let currentNode = tree.find(node => node.name === currentSegment);
+		if (!currentNode) {
+		currentNode = { name: currentSegment, children: [], files: [] };
+		tree.push(currentNode);
 		}
-
-		// Create a new container for the search results
-		resultsContainer = contentEl.createEl("div", { cls: "results-container" });
-
-		files.forEach(file => {
-			// Display each file as a list item or any desired format
-			const fileItem = resultsContainer.createEl("div", { cls: "file-item", text: file.name });
-			
-			// Optional: Add a click event to handle opening the file, etc.
-			fileItem.addEventListener("click", () => {
-				// Add file opening functionality here
-			});
-		});
-
-		contentEl.appendChild(resultsContainer);
+	
+		// If this is the last segment, add the file path to this tag's files
+		if (tagSegments.length === 1) {
+		currentNode.files.push(filePath);
+		} else {
+		// Otherwise, recurse into the children to add deeper levels
+		this.addTagToTree(currentNode.children, tagSegments.slice(1), filePath);
+		}
 	}
 
+
+	generateFinalTagsStructure(app: App) {
+		const tagsTree: any[] = [];
+		const untaggedFiles: string[] = [];
+	
+		// Loop through all files in the vault
+		app.vault.getFiles().forEach((file: TFile) => {
+		const metadata: CachedMetadata | null = app.metadataCache.getFileCache(file);
+	
+		if (metadata?.tags) {
+			// Add tags to the tag tree structure
+			metadata.tags.forEach(tagObj => {
+			const tag = tagObj.tag;
+			const tagSegments = tag.split("/"); // Split the tag into segments
+	
+			// Add the tag's segments to the tags tree
+			this.addTagToTree(tagsTree, tagSegments, file.path);
+			});
+		} else {
+			// If no tags, add the file path to untaggedFiles
+			untaggedFiles.push(file.path);
+		}
+		});
+	
+		// Create the final object
+		const finalTagsStructure = {
+		name: "",
+		children: tagsTree,
+		files: untaggedFiles,
+		};
+	
+		// Print the final structure
+		// console.log("Final Tags Structure:", JSON.stringify(finalTagsStructure, null, 2));
+		return finalTagsStructure;
+	}
+	
+	createTreeView(container: HTMLElement, node: TreeNode, currentPath: string = "") {
+
+		// Calculate the full path for the current node
+		const nodePath = currentPath ? `${currentPath}/${node.name}` : node.name;
+
+		// Create a root div for this node
+		const nodeDiv = document.createElement("div");
+		nodeDiv.classList.add("node");
+		
+		// Folder or file label
+		const labelDiv = document.createElement("div");
+		labelDiv.classList.add("row_folder_holder");
+		labelDiv.setAttribute("data-path", nodePath || ""); // Store the path as a data attribute
+
+
+
+		// labelDiv.textContent = node.name || " "; // Label for root node
+		nodeDiv.appendChild(labelDiv);
+
+		const arrow = document.createElement("div");
+		arrow.classList.add("arrow");
+		arrow.textContent = "▶"; // Default arrow for folders
+
+
+		const nametitle = document.createElement("div");
+		nametitle.classList.add("label");	
+		nametitle.textContent = node.name || ""; // Label for root node
+
+		if (!node.name) {
+			arrow.classList.add("hidden");
+		}
+
+		
+		labelDiv.appendChild(arrow);
+		labelDiv.appendChild(nametitle);
+		
+		// If this node has children (folders) or files, create a collapsible container
+		const childrenContainer = document.createElement("div");
+		childrenContainer.classList.add("children");
+		childrenContainer.style.display = "none"; // Initially hidden
+		
+		// Toggle visibility on click if it's a folder
+		if (node.children && node.children.length > 0 || node.files && node.files.length > 0) {
+			labelDiv.classList.add("folder");
+			arrow.addEventListener("click", () => {
+			arrow.textContent = arrow.textContent === "▶" ? "▼" : "▶"; // Toggle arrow
+			childrenContainer.style.display =
+				childrenContainer.style.display === "none" ? "block" : "none";
+			});
+		
+
+
+
+
+
+			nametitle.addEventListener("click", () => {
+				// Get the path dynamically from an input field or set it manually
+				const tagPath = "tree"; // You can modify this as needed or use an input field
+
+				// Call the renderFileExplorer method with the tagPath
+				this.renderFileExplorer.call(this, nodePath);
+				});
+			
+
+
+
+			// Recursively add each child folder
+			node.children?.forEach(childNode => {
+			this.createTreeView(childrenContainer, childNode, nodePath);
+			});
+		}
+		
+		// Add file nodes within the same childrenContainer
+		if (node.files && node.files.length > 0) {
+			node.files.forEach(file => {
+
+			const fileDiv = document.createElement("div");
+
+
+
+
+			fileDiv.classList.add("row_folder_holder");
+			// Extract filename and path for display
+			const filePath = `${nodePath}/${file}`;
+			fileDiv.setAttribute("data-path", filePath); // Store the path as a data attribute
+			
+			childrenContainer.appendChild(fileDiv);
+
+
+		const placeholder = document.createElement("div");
+		placeholder.classList.add("placeholder");
+		placeholder.textContent = "▶"; // Default arrow for folders
+
+
+		const filenametitle = document.createElement("span");
+		filenametitle.classList.add("file_label");	
+		filenametitle.textContent = (file.split('/').pop() || file).split('.').slice(0, -1).join('.');
+
+		fileDiv.appendChild(placeholder);
+		fileDiv.appendChild(filenametitle);		
+		
+		
+			});
+		}
+		
+		// Append children container to the current nodeDiv (if it has children or files)
+		if (childrenContainer.children.length > 0) {
+			nodeDiv.appendChild(childrenContainer);
+		}
+		
+		// Append the node to the parent container
+		container.appendChild(nodeDiv);
+		}
+
+	renderFileTreeInModal(tagTreeStructure: any) {
+		const container = document.querySelector(".file-tree-container") as HTMLElement;
+		// gotta change this to the right container
+		if (container) {
+			container.innerHTML = ""; // Clear any existing content
+			
+			this.createTreeView(container, tagTreeStructure);
+			// write code to click on this 
+			
+			const firstFolderOrFile = container.querySelector(".arrow")  as HTMLElement;
+			if (firstFolderOrFile) {
+				firstFolderOrFile.click();
+			}
+
+		}
+		}
+
+
+	getDirectChildrenForTagPath(tagPath: string, app: App): TagContents | null {
+		const tagsTree = this.generateFinalTagsStructure(app);
+	
+		// Handle the case where tagPath is empty
+		if (tagPath.trim() === "") {
+			return {
+				childrenTags: tagsTree.children.map((child: any) => child.name),
+				files: tagsTree.files.map(filePath => this.getFileDetails(filePath, app)),
+			};
+		}
+	
+		const tagSegments = tagPath.split("/");
+		let currentNode = tagsTree;
+	
+		for (const segment of tagSegments) {
+			currentNode = currentNode.children.find((node: any) => node.name === segment);
+			if (!currentNode) return null; // Path does not exist
+		}
+	
+		return {
+			childrenTags: currentNode.children.map((child: any) => child.name),
+			files: currentNode.files.map(filePath => this.getFileDetails(filePath, app)),
+		};
+	}
+	
+	// Helper function to retrieve file details
+	getFileDetails(filePath: string, app: App): { path: string; name: string; size: number | null; created: Date | null; modified: Date | null } {
+		const file = app.vault.getAbstractFileByPath(filePath);
+		if (file && file instanceof TFile) {
+			return {
+				path: file.path,
+				name: file.name,
+				size: file.stat.size,
+				created: new Date(file.stat.ctime),
+				modified: new Date(file.stat.mtime),
+			};
+		}
+		// Return basic file details if file not found
+		return { path: filePath, name: filePath.split("/").pop() || "", size: null, created: null, modified: null };
+	}
+	
+
+	// Method to render the file explorer inside the existing container
+	renderFileExplorer(tagPath: string) {
+		// Locate the container element
+		const explorerContainer = document.querySelector(".file-explorer-container") as HTMLElement;
+		
+		if (!explorerContainer) return;
+		
+		// Clear existing content inside the container
+		explorerContainer.innerHTML = '';
+
+		// Retrieve files and subfolders to render based on the tag path
+		const tagContents = this.getDirectChildrenForTagPath(tagPath, this.app);
+		console.log("Tag Contents:", tagContents);
+		console.log("Explorer Path:", tagPath);
+
+
+// indentify the location of the file path block and then populate it with this tagPath
+// 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+
+const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+// gotta change this to the right container
+if (container) {
+	container.innerHTML = ""; // Clear any existing content
+	
+	container.textContent = "home/" + tagPath;
+	// write code to click on this 
+
+}
+
+
+		if (tagContents) {
+			// Render subfolders (children tags)
+			tagContents.childrenTags.forEach(childTag => {
+				console.log("Child Tag:", childTag);
+				// Create each subfolder block (square)
+				const folderBlock = explorerContainer.createEl("div", { cls: "folder-block" });
+				folderBlock.createEl("div", { cls: "folder-icon", text: "📁" }); // Folder icon
+				folderBlock.createEl("div", { cls: "folder-name", text: childTag }); // Folder name
+
+				// Tooltip with folder details on hover
+				folderBlock.setAttribute("title", `Folder: ${childTag}`);
+				
+
+				// Add click event to navigate into subfolder with correctly formatted path
+				folderBlock.addEventListener("click", () => {
+					const newPath = tagPath ? `${tagPath}/${childTag}` : childTag;
+					this.renderFileExplorer.call(this, newPath);
+					
+				});
+
+			});
+
+			// Render files
+			tagContents.files.forEach(file => {
+				// console.log("File:", file);
+				// Create each file block (square)
+				const fileBlock = explorerContainer.createEl("div", { cls: "file-block" });
+				fileBlock.createEl("div", { cls: "file-icon", text: "📄" }); // File icon
+				fileBlock.createEl("div", { cls: "file-name", text: file.name }); // File name
+
+				// Tooltip with file details on hover
+				fileBlock.setAttribute("title", `Path: ${file.path}\nSize: ${file.size} bytes\nCreated: ${file.created}\nModified: ${file.modified}`);
+			});
+		}
+
+
+	}
 
 
 
@@ -92,14 +403,35 @@ class MyPopupModal extends Modal {
 	// Define the functionality for the custom button
 	refreshButton?.addEventListener("click", () => {
 		// TODO: Add the functionality for the custom button
+	
+		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+		// Get the text content and remove the "home/" prefix if it exists
+		const tagPath = container.textContent?.replace(/^home\//, "") || "";
+		this.renderFileExplorer.call(this, tagPath);
+
+		var tagsTree = this.generateFinalTagsStructure(this.app);
+		this.renderFileTreeInModal(tagsTree);
+
 	});
 
 	// Define the functionality for the custom button
 	homeButton?.addEventListener("click", () => {
 		// TODO: Add the functionality for the custom button
+
+		// Call the renderFileExplorer method with the tagPath
+		this.renderFileExplorer.call(this, "");
+
+		var tagsTree = this.generateFinalTagsStructure(this.app);
+		this.renderFileTreeInModal(tagsTree);
 	});
 
 
+
+
+
+
+
+	
 	// Set up flex container to hold two columns
 	contentEl.style.display = "flex";
 	contentEl.style.flexDirection = "row";
@@ -155,8 +487,9 @@ class MyPopupModal extends Modal {
 	// Create the top section (thin)
 	const topSection = leftColumn.createDiv();
 	topSection.classList.add("rect_border");
+	topSection.classList.add("tag_path_identifier");
 	topSection.style.height = "var(--size-height)"; // Fixed height for the top section
-	topSection.createEl("span", { text: "File Path" });
+	// topSection.createEl("span", { text: "File Path" });
 
 	// Create the bottom section (flexible height)
 	const bottomSection = leftColumn.createDiv();
@@ -197,7 +530,8 @@ class MyPopupModal extends Modal {
 
 
 	// Create the bottom section (flexible height)
-	const bottomSection_of_left_bottom = leftBottomColumn.createDiv();
+	
+	const bottomSection_of_left_bottom = leftBottomColumn.createEl("div", { cls: "file-tree-container" });
 	bottomSection_of_left_bottom.classList.add("rect_border");
 	bottomSection_of_left_bottom.style.flex = "1"; // Takes the remaining height
 	bottomSection_of_left_bottom.createEl("span", { text: "File hierarchy tree" });
@@ -226,10 +560,12 @@ class MyPopupModal extends Modal {
 
 
 	// Create the bottom section (flexible height)
-	const bottomSection_of_right_bottom = rightBottomColumn.createDiv();
+	const bottomSection_of_right_bottom = rightBottomColumn.createEl("div", { cls: "" });
 	bottomSection_of_right_bottom.classList.add("rect_border");
+	bottomSection_of_right_bottom.classList.add("file_exp");
 	bottomSection_of_right_bottom.style.flex = "1"; // Takes the remaining height
-	bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
+	var main_view_container = bottomSection_of_right_bottom.createEl("div", { cls: "file-explorer-container" });
+	// bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
 
 
 
@@ -256,7 +592,6 @@ class MyPopupModal extends Modal {
 		// Toggle visibility of results container based on query
 		resultsContainer.style.display = query ? 'block' : 'none';
 		
-		
 		if (query) {
 			const files = this.app.vault.getFiles();
 			const matchedFiles = files.filter(file => file.name.toLowerCase().includes(query));
@@ -266,6 +601,7 @@ class MyPopupModal extends Modal {
 				fileItem.addEventListener('click', () => {
 					console.log(`Selected file: ${file.name}`);
 					// You can add functionality to open or preview the file here
+					// TODO: Add functionality to open the parent of the clicked file
 				});
 			});
 		}
@@ -273,168 +609,30 @@ class MyPopupModal extends Modal {
 
 
 
-
-
-	// Recursive function to get the entire folder structure with children as an array
-	function getFolderStructure(folder: TFolder): { name: string; children: any[]; files: string[] } {
-		// Collect all files in the current folder
-		const files = folder.children
-		.filter((child) => child instanceof TFile)
-		.map((file) => file.name);
-	
-		// Recursively collect all subfolders
-		const children = folder.children
-		.filter((child) => child instanceof TFolder)
-		.map((subFolder) => getFolderStructure(subFolder as TFolder));  // Recursive call for subfolders
-	
-		return {
-		name: folder.name,   // Folder's name
-		children,            // Recursively collected subfolders as an array
-		files,               // Direct files within the current folder
-		
-		};
-	}
-	
-
-	const rootStructure = getFolderStructure(this.app.vault.getRoot());
-	console.log(JSON.stringify(rootStructure, null, 2));  // Pretty-print the structure in JSON format
+	// const rootStructure = this.getFolderStructure(this.app.vault.getRoot());
+	// console.log(JSON.stringify(rootStructure, null, 2));  
 
 
 
+	// this.generateFinalTagsStructure(this.app);
 
-	// Recursive function to add tags to the tree structure
-	function addTagToTree(tree: any[], tagSegments: string[], filePath: string) {
-		// Remove '#' if it exists at the beginning of the first segment
-		const currentSegment = tagSegments[0].startsWith("#") ? tagSegments[0].substring(1) : tagSegments[0];
-	
-		// Find or create the current segment in the tree
-		let currentNode = tree.find(node => node.name === currentSegment);
-		if (!currentNode) {
-		currentNode = { name: currentSegment, children: [], files: [] };
-		tree.push(currentNode);
-		}
-	
-		// If this is the last segment, add the file path to this tag's files
-		if (tagSegments.length === 1) {
-		currentNode.files.push(filePath);
-		} else {
-		// Otherwise, recurse into the children to add deeper levels
-		addTagToTree(currentNode.children, tagSegments.slice(1), filePath);
-		}
-	}
-	
-	function generateFinalTagsStructure(app: App) {
-		const tagsTree: any[] = [];
-		const untaggedFiles: string[] = [];
-	
-		// Loop through all files in the vault
-		app.vault.getFiles().forEach((file: TFile) => {
-		const metadata: CachedMetadata | null = app.metadataCache.getFileCache(file);
-	
-		if (metadata?.tags) {
-			// Add tags to the tag tree structure
-			metadata.tags.forEach(tagObj => {
-			const tag = tagObj.tag;
-			const tagSegments = tag.split("/"); // Split the tag into segments
-	
-			// Add the tag's segments to the tags tree
-			addTagToTree(tagsTree, tagSegments, file.path);
-			});
-		} else {
-			// If no tags, add the file path to untaggedFiles
-			untaggedFiles.push(file.path);
-		}
-		});
-	
-		// Create the final object
-		const finalTagsStructure = {
-		name: "",
-		children: tagsTree,
-		files: untaggedFiles,
-		};
-	
-		// Print the final structure
-		// console.log("Final Tags Structure:", JSON.stringify(finalTagsStructure, null, 2));
-		return finalTagsStructure;
-	}
-	
-	// generateFinalTagsStructure(this.app);
+
+	var tagsTree = this.generateFinalTagsStructure(this.app);
+	this.renderFileTreeInModal(tagsTree);
 
 
 
-
-	function createTreeView(container: HTMLElement, node: TreeNode) {
-		// Create a root div for this node
-		const nodeDiv = document.createElement("div");
-		nodeDiv.classList.add("node");
-		
-		// Folder or file label
-		const labelDiv = document.createElement("div");
-		labelDiv.classList.add("label");
-		labelDiv.textContent = node.name || " "; // Label for root node
-		nodeDiv.appendChild(labelDiv);
-		
-		// If this node has children (folders) or files, create a collapsible container
-		const childrenContainer = document.createElement("div");
-		childrenContainer.classList.add("children");
-		childrenContainer.style.display = "none"; // Initially hidden
-		
-		// Toggle visibility on click if it's a folder
-		if (node.children && node.children.length > 0 || node.files && node.files.length > 0) {
-			labelDiv.classList.add("folder");
-			labelDiv.addEventListener("click", () => {
-			childrenContainer.style.display =
-				childrenContainer.style.display === "none" ? "block" : "none";
-			});
-		
-			// Recursively add each child folder
-			node.children?.forEach(childNode => {
-			createTreeView(childrenContainer, childNode);
-			});
-		}
-		
-		// Add file nodes within the same childrenContainer
-		if (node.files && node.files.length > 0) {
-			node.files.forEach(file => {
-			const fileDiv = document.createElement("div");
-			fileDiv.classList.add("file");
-			fileDiv.textContent = (file.split('/').pop() || file).split('.').slice(0, -1).join('.');
-			childrenContainer.appendChild(fileDiv);
-			});
-		}
-		
-		// Append children container to the current nodeDiv (if it has children or files)
-		if (childrenContainer.children.length > 0) {
-			nodeDiv.appendChild(childrenContainer);
-		}
-		
-		// Append the node to the parent container
-		container.appendChild(nodeDiv);
-		}
-		
-
-		
-		
-		
-	// Function to initialize and render the tree in the modal section
-	function renderFileTreeInModal(tagTreeStructure: any) {
-	const container = bottomSection_of_left_bottom
-	if (container) {
-		container.innerHTML = ""; // Clear any existing content
-		container.classList.add("file-tree-container");
-		
-		createTreeView(container, tagTreeStructure);
-	}
-	}
-
-
-	renderFileTreeInModal(generateFinalTagsStructure(this.app));
+	// const ttagContents = this.getDirectChildrenForTagPath("", this.app);
+	// console.log("Direct Children:", JSON.stringify(ttagContents, null, 2));
 
 
 
 
 
+	const hometagPath = ""; // You can modify this as needed or use an input field
 
+	// Call the renderFileExplorer method with the tagPath
+	this.renderFileExplorer.call(this, hometagPath);
 
 
 
