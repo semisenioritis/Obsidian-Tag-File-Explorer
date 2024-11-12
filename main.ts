@@ -331,8 +331,7 @@ class MyPopupModal extends Modal {
 		console.log("Explorer Path:", tagPath);
 
 
-// indentify the location of the file path block and then populate it with this tagPath
-// 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴
+
 
 const container = document.querySelector(".tag_path_identifier") as HTMLElement;
 // gotta change this to the right container
