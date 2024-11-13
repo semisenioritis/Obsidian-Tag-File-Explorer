@@ -1,0 +1,184 @@
+{
+  "name": "",
+  "children": [
+    {
+      "name": "tree",
+      "children": [
+        {
+          "name": "india",
+          "children": [],
+          "files": [
+            "Walnut.md",
+            "Coconut.md"
+          ]
+        },
+        {
+          "name": "flower",
+          "children": [],
+          "files": [
+            "Sequioa.md",
+            "Magnolia.md",
+            "Images/Obsidian File explorer plugin Status Document.md"
+          ]
+        },
+        {
+          "name": "foreign",
+          "children": [],
+          "files": [
+            "Willow.md",
+            "Sycamore.md",
+            "Spruce.md",
+            "Olive.md",
+            "Ginkgo.md",
+            "Oak.md",
+            "Baobab.md",
+            "Fig.md"
+          ]
+        }
+      ],
+      "files": [
+        "Bark.md"
+      ]
+    },
+    {
+      "name": "veg",
+      "children": [
+        {
+          "name": "common",
+          "children": [
+            {
+              "name": "potato",
+              "children": [],
+              "files": [
+                "Vegetables/Tomato.md",
+                "Vegetables/Potato.md"
+              ]
+            }
+          ],
+          "files": []
+        },
+        {
+          "name": "gourd",
+          "children": [
+            {
+              "name": "bitter",
+              "children": [],
+              "files": [
+                "Vegetables/Gourds/Bitter Gourd.md"
+              ]
+            },
+            {
+              "name": "pumpkin",
+              "children": [],
+              "files": [
+                "Vegetables/Gourds/Pumpkin.md"
+              ]
+            }
+          ],
+          "files": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "name": "event",
+      "children": [
+        {
+          "name": "decoration",
+          "children": [
+            {
+              "name": "tomatina",
+              "children": [
+                {
+                  "name": "tomato",
+                  "children": [],
+                  "files": [
+                    "Vegetables/Tomato.md"
+                  ]
+                }
+              ],
+              "files": []
+            },
+            {
+              "name": "pumpkin",
+              "children": [],
+              "files": [
+                "Vegetables/Gourds/Pumpkin.md"
+              ]
+            }
+          ],
+          "files": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "name": "-_-project-_-",
+      "children": [
+        {
+          "name": "-_-project1-_-",
+          "children": [],
+          "files": [
+            "Images/Obsidian File explorer plugin Status Document.md"
+          ]
+        }
+      ],
+      "files": []
+    },
+    {
+      "name": "fruits",
+      "children": [
+        {
+          "name": "orange",
+          "children": [],
+          "files": [
+            "Fruits/orange.md"
+          ]
+        },
+        {
+          "name": "apple",
+          "children": [],
+          "files": [
+            "Fruits/apple.md"
+          ]
+        }
+      ],
+      "files": []
+    },
+    {
+      "name": "color",
+      "children": [
+        {
+          "name": "orange",
+          "children": [],
+          "files": [
+            "Fruits/orange.md"
+          ]
+        }
+      ],
+      "files": []
+    },
+    {
+      "name": "company",
+      "children": [
+        {
+          "name": "apple",
+          "children": [],
+          "files": [
+            "Fruits/apple.md"
+          ]
+        }
+      ],
+      "files": []
+    }
+  ],
+  "files": [
+    "Vegetables/Leafy/Spinach.md",
+    "Vegetables/Cabbage.md",
+    "Images/Pasted image 20241105215538.png",
+    "Images/Pasted image 20241105165020.png",
+    "Images/Pasted image 20241105220340.png",
+    "Images/Pasted image 20241105164938.png",
+    "Images/Pasted image 20241105162022.png"
+  ]
+}
