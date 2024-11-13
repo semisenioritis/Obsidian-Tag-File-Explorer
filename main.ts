@@ -197,8 +197,6 @@ class MyPopupModal extends Modal {
 
 
 			nametitle.addEventListener("click", () => {
-				// Get the path dynamically from an input field or set it manually
-				const tagPath = "tree"; // You can modify this as needed or use an input field
 
 				// Call the renderFileExplorer method with the tagPath
 				this.renderFileExplorer.call(this, nodePath);
@@ -224,8 +222,9 @@ class MyPopupModal extends Modal {
 
 			fileDiv.classList.add("row_folder_holder");
 			// Extract filename and path for display
-			const filePath = `${nodePath}/${file}`;
-			fileDiv.setAttribute("data-path", filePath); // Store the path as a data attribute
+			// const filePath = `${nodePath}/${file}`;
+			fileDiv.setAttribute("data-path", file); 
+			// THIS CONTAINS THE ACTUAL REAL PATH OF THE FILE TO BE OPENED
 			
 			childrenContainer.appendChild(fileDiv);
 
@@ -240,8 +239,21 @@ class MyPopupModal extends Modal {
 		filenametitle.textContent = (file.split('/').pop() || file).split('.').slice(0, -1).join('.');
 
 		fileDiv.appendChild(placeholder);
-		fileDiv.appendChild(filenametitle);		
+		fileDiv.appendChild(filenametitle);	
 		
+		
+		filenametitle.addEventListener("click", () => {
+
+
+// TODO OPEN THIS FILE IN THE ACTUAL MAIN OBSIDIAN BACKGROUND TAB
+
+
+
+
+			});
+		
+
+
 		
 			});
 		}
@@ -401,7 +413,7 @@ if (container) {
 
 	// Define the functionality for the custom button
 	refreshButton?.addEventListener("click", () => {
-		// TODO: Add the functionality for the custom button
+		
 	
 		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
 		// Get the text content and remove the "home/" prefix if it exists
@@ -415,7 +427,7 @@ if (container) {
 
 	// Define the functionality for the custom button
 	homeButton?.addEventListener("click", () => {
-		// TODO: Add the functionality for the custom button
+		
 
 		// Call the renderFileExplorer method with the tagPath
 		this.renderFileExplorer.call(this, "");
@@ -467,6 +479,11 @@ if (container) {
 	midSection_right.classList.add("rect_border");
 	midSection_right.style.flex = "3"; // Fixed height for the top section
 	midSection_right.createEl("span", { text: "Description" });
+
+
+
+
+
 
 
 

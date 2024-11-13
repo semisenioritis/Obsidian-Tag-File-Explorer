@@ -1,0 +1,65 @@
+{
+  "name": "",
+  "children": [
+    {
+      "name": "Fruits",
+      "children": [],
+      "files": [
+        "apple.md",
+        "orange.md"
+      ]
+    },
+    {
+      "name": "Images",
+      "children": [],
+      "files": [
+        "Pasted image 20241105162022.png",
+        "Pasted image 20241105164938.png",
+        "Pasted image 20241105220340.png",
+        "Pasted image 20241105165020.png",
+        "Obsidian File explorer plugin Status Document.md",
+        "Pasted image 20241105215538.png"
+      ]
+    },
+    {
+      "name": "Vegetables",
+      "children": [
+        {
+          "name": "Gourds",
+          "children": [],
+          "files": [
+            "Pumpkin.md",
+            "Bitter Gourd.md"
+          ]
+        },
+        {
+          "name": "Leafy",
+          "children": [],
+          "files": [
+            "Spinach.md"
+          ]
+        }
+      ],
+      "files": [
+        "Cabbage.md",
+        "Potato.md",
+        "Tomato.md"
+      ]
+    }
+  ],
+  "files": [
+    "Fig.md",
+    "Baobab.md",
+    "Coconut.md",
+    "Oak.md",
+    "Ginkgo.md",
+    "Magnolia.md",
+    "Olive.md",
+    "Spruce.md",
+    "Sycamore.md",
+    "Willow.md",
+    "Sequioa.md",
+    "Walnut.md",
+    "Bark.md"
+  ]
+}
