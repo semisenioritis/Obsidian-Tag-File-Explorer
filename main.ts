@@ -46,6 +46,17 @@ export default class MyPlugin extends Plugin {
     ribbonIconEl.setAttribute("aria-label", "Open Popup");
 
 
+			const folderPath = ".tagfoldermeta"; 
+	        // Check if the folder exists
+			const folderExists = await this.app.vault.adapter.exists(folderPath);
+
+			if (!folderExists) {
+				// Folder doesn't exist, create it
+				await this.app.vault.createFolder(folderPath);
+				// console.log(`Folder "${folderPath}" created successfully.`);
+			} else {
+				// console.log(`Folder "${folderPath}" already exists.`);
+			}
 
   }
 
@@ -183,7 +194,7 @@ class MyPopupModal extends Modal {
 		childrenContainer.style.display = "none"; // Initially hidden
 		
 		// Toggle visibility on click if it's a folder
-		if (node.children && node.children.length > 0 || node.files && node.files.length > 0) {
+		if (node.children && node.children.length > 0 || node.files && node.files.length >= 0) {
 			labelDiv.classList.add("folder");
 			arrow.addEventListener("click", () => {
 			arrow.textContent = arrow.textContent === "▶" ? "▼" : "▶"; // Toggle arrow
@@ -285,8 +296,8 @@ class MyPopupModal extends Modal {
 		}
 
 
-	getDirectChildrenForTagPath(tagPath: string, app: App): TagContents | null {
-		const tagsTree = this.generateFinalTagsStructure(app);
+	async getDirectChildrenForTagPath(tagPath: string, app: App): Promise<TagContents | null> {
+		const tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(app);
 	
 		// Handle the case where tagPath is empty
 		if (tagPath.trim() === "") {
@@ -328,7 +339,7 @@ class MyPopupModal extends Modal {
 	
 
 	// Method to render the file explorer inside the existing container
-	renderFileExplorer(tagPath: string) {
+	async renderFileExplorer(tagPath: string) {
 		// Locate the container element
 		const explorerContainer = document.querySelector(".file-explorer-container") as HTMLElement;
 		
@@ -338,28 +349,28 @@ class MyPopupModal extends Modal {
 		explorerContainer.innerHTML = '';
 
 		// Retrieve files and subfolders to render based on the tag path
-		const tagContents = this.getDirectChildrenForTagPath(tagPath, this.app);
+		const tagContents = await this.getDirectChildrenForTagPath(tagPath, this.app);
 		console.log("Tag Contents:", tagContents);
 		console.log("Explorer Path:", tagPath);
 
 
 
 
-const container = document.querySelector(".tag_path_identifier") as HTMLElement;
-// gotta change this to the right container
-if (container) {
-	container.innerHTML = ""; // Clear any existing content
-	
-	container.textContent = "home/" + tagPath;
-	// write code to click on this 
+	const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+	// gotta change this to the right container
+	if (container) {
+		container.innerHTML = ""; // Clear any existing content
+		
+		container.textContent = "home/" + tagPath;
+		// write code to click on this 
 
-}
+	}
 
 
 		if (tagContents) {
 			// Render subfolders (children tags)
 			tagContents.childrenTags.forEach(childTag => {
-				console.log("Child Tag:", childTag);
+				// console.log("Child Tag:", childTag);
 				// Create each subfolder block (square)
 				const folderBlock = explorerContainer.createEl("div", { cls: "folder-block" });
 				folderBlock.createEl("div", { cls: "folder-icon", text: "📁" }); // Folder icon
@@ -394,10 +405,143 @@ if (container) {
 
 	}
 
+	async folderMetadataFileCreation(inputPath: string) {
+		const tagFolder = ".tagfoldermeta"; // Folder name
+		const segments = inputPath.split("/"); // Split the path into segments
+		let cumulativePath = "";
+
+		for (const [index, segment] of segments.entries()) {
+			// Build the cumulative file path
+			cumulativePath += (index === 0 ? "" : "_-_-_") + segment;
+			const fileName = `${tagFolder}/${cumulativePath}.md`; // Construct the file path
+	
+			// Check if the file exists
+			const fileExists = await this.app.vault.adapter.exists(fileName) ;
+
+			if (!fileExists) {
+				// File doesn't exist, create it
+				await this.app.vault.create(fileName, `# Metadata for ${cumulativePath}`);
+				// console.log(`File "${fileName}" created successfully.`);
+			} else {
+				// console.log(`File "${fileName}" already exists.`);
+			}
+		}
+	}
+	
+
+
+	 getAllPaths(tree: any, currentPath: string = ""): string[] {
+		const paths: string[] = [];
+	  
+		// Loop through each child in the tree
+		tree.forEach((node: any) => {
+		  // Construct the full path for the current node
+		  const fullPath = currentPath ? `${currentPath}/${node.name}` : node.name;
+	  
+		  // Add the full path to the list of paths
+		  paths.push(fullPath);
+	  
+		  // Recursively process children and add their paths
+		  if (node.children && node.children.length > 0) {
+			const childPaths = this.getAllPaths(node.children, fullPath);
+			paths.push(...childPaths);
+		  }
+		});
+	  
+		return paths;
+	  }
+	  
+
+
+	   addPathToTree(tree: any[], pathSegments: string[]) {
+		// console.log("Path Segments:", pathSegments);
+		const currentSegment = pathSegments[0];
+	//   console.log("Current Segment:", currentSegment);
+		// Find or create the current segment in the tree
+		let currentNode = tree.find(node => node.name === currentSegment);
+		if (!currentNode) {
+			// console.log("Current Node:", currentSegment);
+		  currentNode = { name: currentSegment, files: [], children: [] };
+		  tree.push(currentNode);
+		}
+	  
+		// If there are more segments, recurse into the children
+		if (pathSegments.length > 1) {
+		  this.addPathToTree(currentNode.children, pathSegments.slice(1));
+		}
+	  }
+	  
+	  // Function to add an array of paths to the existing tree structure
+	   integratePathsToTree(tree: any[], paths: string[]) {
+		paths.forEach(path => {
+		  const pathSegments = path.split("/"); // Split the path into segments
+		//   console.log("Path Segments:", pathSegments);
+		  this.addPathToTree(tree, pathSegments); // Add the segments to the tree
+		});
+	  }
+	  
+
+	  async  getPathsFromTagFolder(): Promise<string[]> {
+		const tagFolder = ".tagfoldermeta"; // Folder name
+		const paths: string[] = [];
+	
+		// Check if the folder exists
+		const folderExists = await this.app.vault.adapter.exists(tagFolder);
+	
+		if (folderExists) {
+			// List all files in the folder
+			const files = await this.app.vault.adapter.list(tagFolder);
+	
+			// Process only `.md` files
+			files.files.forEach((file) => {
+				if (file.endsWith(".md")) {
+					// Replace '&' with '/' to reconstruct the path
+					const reconstructedPath = file.replace(`${tagFolder}/`, "").replace(".md", "").replace(/_-_-_/g, "/");
+					paths.push(reconstructedPath);
+				}
+			});
+		} else {
+			// console.log(`Folder ${tagFolder} does not exist.`);
+		}
+	
+		return paths;
+	}
+	
+	
+
+
+	  async extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(app: App) {
+		// Generate the final tags structure
+		const finalTagsStructure = this.generateFinalTagsStructure(app); // Assumes the function exists
+	  
+		// Extract all folder paths from the children of the root
+		const allPaths = this.getAllPaths(finalTagsStructure.children);
+	  
+		// Log the result
+		// console.log("All Folder Paths:", allPaths);
+
+
+		// Iterate over each path and call the folderMetadataFileCreation function
+		for (const path of allPaths) {
+			await this.folderMetadataFileCreation(path);
+		}
+
+
+		const paths = await this.getPathsFromTagFolder();
+		// console.log("these are paths", paths);
+
+		this.integratePathsToTree(finalTagsStructure.children, paths);
+
+
+		// console.log("Final Tags Structure:", JSON.stringify(finalTagsStructure, null, 2));
+
+		
+		return finalTagsStructure
+	  }
 
 
 
-  onOpen() {
+  async onOpen() {
     // const { contentEl } = this;
 	const { modalEl, contentEl } = this;
 	modalEl.style.width = "100%";
@@ -412,7 +556,7 @@ if (container) {
 	const homeButton = headerEl?.createEl("div", { cls: "home-header-button" });
 
 	// Define the functionality for the custom button
-	refreshButton?.addEventListener("click", () => {
+	refreshButton?.addEventListener("click", async () => {
 		
 	
 		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
@@ -420,19 +564,19 @@ if (container) {
 		const tagPath = container.textContent?.replace(/^home\//, "") || "";
 		this.renderFileExplorer.call(this, tagPath);
 
-		var tagsTree = this.generateFinalTagsStructure(this.app);
+		var tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
 		this.renderFileTreeInModal(tagsTree);
 
 	});
 
 	// Define the functionality for the custom button
-	homeButton?.addEventListener("click", () => {
+	homeButton?.addEventListener("click", async () => {
 		
 
 		// Call the renderFileExplorer method with the tagPath
 		this.renderFileExplorer.call(this, "");
 
-		var tagsTree = this.generateFinalTagsStructure(this.app);
+		var tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
 		this.renderFileTreeInModal(tagsTree);
 	});
 
@@ -629,12 +773,20 @@ if (container) {
 	// console.log(JSON.stringify(rootStructure, null, 2));  
 
 
-
-	// this.generateFinalTagsStructure(this.app);
-
-
 	var tagsTree = this.generateFinalTagsStructure(this.app);
-	this.renderFileTreeInModal(tagsTree);
+	// 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
+
+// console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
+	// testing this function 
+	// this.folderMetadataFileCreation("tree/foreign/super/test/another/please/tree"); // Create the metadata files for the home path
+
+
+
+	var betterTagsTree =  await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
+	console.log("Better Tags Tree:", JSON.stringify(betterTagsTree, null, 2));
+
+	// this.renderFileTreeInModal(tagsTree);
+	this.renderFileTreeInModal(betterTagsTree);
 
 
 
@@ -661,6 +813,21 @@ if (container) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 
 
   }
