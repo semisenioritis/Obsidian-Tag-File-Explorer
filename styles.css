@@ -34,7 +34,6 @@ If your plugin does not need CSS, delete this file.
 
 .refresh-header-button:before {
     font-family: Inter, sans-serif;
-    content: '\27f2';
     font-weight: 300;
 
 }
@@ -62,7 +61,6 @@ If your plugin does not need CSS, delete this file.
 
 .home-header-button:before {
     font-family: Inter, sans-serif;
-    content: '\1f3e0';
     font-weight: 300;
 
 }
@@ -168,7 +166,10 @@ body{
     
   }
 
-  /* ========= All Above are Confirm ========= */
+
+
+  /* ==================================== */
+
 
 
   
@@ -243,4 +244,38 @@ body{
   max-width: 210px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+
+  /* ========= All Above are Confirm ========= */
+
+
+
+
+  .tag_path_identifier{
+    flex: 1;
+  }
+
+
+  
+  .backup-button:before {
+  font-family: Inter, sans-serif;
+  font-weight: 300;
+
+}
+
+.backup-button{
+  transition: opacity 0.15s ease-in-out;
+  cursor: var(--cursor);
+  align-content: center;
+  text-align: center;
+  border-radius: var(--radius-s);
+  width: var(--size-height); /* Square width */
+  aspect-ratio: 1; /* Ensures it's a square */
+
+}
+
+.backup-button:hover {
+  color: var(--interactive-accent);
+
 }

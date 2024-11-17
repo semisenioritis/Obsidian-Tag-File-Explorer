@@ -3,7 +3,8 @@
 import { App, Modal, Plugin, PluginSettingTab, Setting, TFolder, TFile } from 'obsidian';
 import { CachedMetadata } from 'obsidian';
 import { normalizePath } from 'obsidian';
-
+import { setIcon } from "obsidian";
+import { listeners } from 'process';
 
 interface TreeNode {
 	name: string;
@@ -297,7 +298,7 @@ class MyPopupModal extends Modal {
 
 
 	async getDirectChildrenForTagPath(tagPath: string, app: App): Promise<TagContents | null> {
-		const tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(app);
+		const tagsTree = await this.finalCompleteTree(app);
 	
 		// Handle the case where tagPath is empty
 		if (tagPath.trim() === "") {
@@ -376,13 +377,14 @@ class MyPopupModal extends Modal {
 				folderBlock.createEl("div", { cls: "folder-icon", text: "📁" }); // Folder icon
 				folderBlock.createEl("div", { cls: "folder-name", text: childTag }); // Folder name
 
+				const newPath = tagPath ? `${tagPath}/${childTag}` : childTag;
 				// Tooltip with folder details on hover
-				folderBlock.setAttribute("title", `Folder: ${childTag}`);
+				folderBlock.setAttribute("title", `Folder: ${newPath}`);
 				
 
 				// Add click event to navigate into subfolder with correctly formatted path
 				folderBlock.addEventListener("click", () => {
-					const newPath = tagPath ? `${tagPath}/${childTag}` : childTag;
+					
 					this.renderFileExplorer.call(this, newPath);
 					
 				});
@@ -451,7 +453,31 @@ class MyPopupModal extends Modal {
 		return paths;
 	  }
 	  
-
+	  async  getPathsFromTagFolder(): Promise<string[]> {
+		const tagFolder = ".tagfoldermeta"; // Folder name
+		const paths: string[] = [];
+	
+		// Check if the folder exists
+		const folderExists = await this.app.vault.adapter.exists(tagFolder);
+	
+		if (folderExists) {
+			// List all files in the folder
+			const files = await this.app.vault.adapter.list(tagFolder);
+	
+			// Process only `.md` files
+			files.files.forEach((file) => {
+				if (file.endsWith(".md")) {
+					// Replace '&' with '/' to reconstruct the path
+					const reconstructedPath = file.replace(`${tagFolder}/`, "").replace(".md", "").replace(/_-_-_/g, "/");
+					paths.push(reconstructedPath);
+				}
+			});
+		} else {
+			// console.log(`Folder ${tagFolder} does not exist.`);
+		}
+	
+		return paths;
+	}
 
 	   addPathToTree(tree: any[], pathSegments: string[]) {
 		// console.log("Path Segments:", pathSegments);
@@ -481,36 +507,12 @@ class MyPopupModal extends Modal {
 	  }
 	  
 
-	  async  getPathsFromTagFolder(): Promise<string[]> {
-		const tagFolder = ".tagfoldermeta"; // Folder name
-		const paths: string[] = [];
-	
-		// Check if the folder exists
-		const folderExists = await this.app.vault.adapter.exists(tagFolder);
-	
-		if (folderExists) {
-			// List all files in the folder
-			const files = await this.app.vault.adapter.list(tagFolder);
-	
-			// Process only `.md` files
-			files.files.forEach((file) => {
-				if (file.endsWith(".md")) {
-					// Replace '&' with '/' to reconstruct the path
-					const reconstructedPath = file.replace(`${tagFolder}/`, "").replace(".md", "").replace(/_-_-_/g, "/");
-					paths.push(reconstructedPath);
-				}
-			});
-		} else {
-			// console.log(`Folder ${tagFolder} does not exist.`);
-		}
-	
-		return paths;
-	}
+
 	
 	
 
 
-	  async extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(app: App) {
+	  async finalCompleteTree(app: App) {
 		// Generate the final tags structure
 		const finalTagsStructure = this.generateFinalTagsStructure(app); // Assumes the function exists
 	  
@@ -539,7 +541,43 @@ class MyPopupModal extends Modal {
 		return finalTagsStructure
 	  }
 
+	   moveToParent(): void {
+		// Find the div with the class .tag_path_identifier
+		const pathDiv = document.querySelector(".tag_path_identifier");
+	  
+		// Ensure the div exists
+		if (!pathDiv) {
+		  console.error("No path found in .tag_path_identifier");
+		  return; // Exit the function
+		}
+	  
+		// Use non-null assertion to access textContent
+		const path = pathDiv.textContent!.trim();
+	  
+		// Function to get the parent path
+		const getParentPath = (path: string): string => {
+		  const trimmedPath = path.endsWith("/") ? path.slice(0, -1) : path;
+		  const parts = trimmedPath.split("/");
+		  if (parts.length <= 1) {
+			return path; // Root-level path returns itself
+		  }
+		  return parts.slice(0, -1).join("/");
+		};
+	  
+		// Calculate the parent path
+		let parentPath = getParentPath(path);
+		console.log("Parent Path 1:", parentPath);
+		parentPath = parentPath.replace(/^home\//, "");
+		parentPath = parentPath.replace(/^home/, "");
 
+
+		this.renderFileExplorer.call(this, parentPath);
+		// Log the parent path
+		console.log("Parent Path 2:", parentPath);
+	  }
+	  
+	  
+	  
 
   async onOpen() {
     // const { contentEl } = this;
@@ -552,8 +590,20 @@ class MyPopupModal extends Modal {
 
 	// Create a custom button and add it beside the close button
 	const headerEl = modalEl.querySelector('.modal-close-button')?.parentElement;
-	const refreshButton = headerEl?.createEl("div", { cls: "refresh-header-button" });
-	const homeButton = headerEl?.createEl("div", { cls: "home-header-button" });
+
+	const refreshButton = headerEl?.createDiv();
+	refreshButton?.classList.add("refresh-header-button");
+
+	if (refreshButton) {
+		setIcon(refreshButton, "rotate-ccw");
+	}
+
+	const homeButton = headerEl?.createDiv();
+	homeButton?.classList.add("home-header-button");
+
+	if (homeButton) {
+		setIcon(homeButton, "house");
+	}
 
 	// Define the functionality for the custom button
 	refreshButton?.addEventListener("click", async () => {
@@ -564,7 +614,7 @@ class MyPopupModal extends Modal {
 		const tagPath = container.textContent?.replace(/^home\//, "") || "";
 		this.renderFileExplorer.call(this, tagPath);
 
-		var tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
+		var tagsTree = await this.finalCompleteTree(this.app);
 		this.renderFileTreeInModal(tagsTree);
 
 	});
@@ -576,7 +626,7 @@ class MyPopupModal extends Modal {
 		// Call the renderFileExplorer method with the tagPath
 		this.renderFileExplorer.call(this, "");
 
-		var tagsTree = await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
+		var tagsTree = await this.finalCompleteTree(this.app);
 		this.renderFileTreeInModal(tagsTree);
 	});
 
@@ -647,9 +697,38 @@ class MyPopupModal extends Modal {
 	// Create the top section (thin)
 	const topSection = leftColumn.createDiv();
 	topSection.classList.add("rect_border");
-	topSection.classList.add("tag_path_identifier");
+
+	
 	topSection.style.height = "var(--size-height)"; // Fixed height for the top section
+	topSection.style.display = "flex"; // Set display to flex for the top section
+	
+
+	
 	// topSection.createEl("span", { text: "File Path" });
+
+
+
+	const addressOfLocation = topSection.createDiv();
+	addressOfLocation.classList.add("tag_path_identifier");
+
+	const backupButton = topSection.createDiv();
+	backupButton.classList.add("backup-button");
+	setIcon(backupButton, "folder-output");
+
+	backupButton?.addEventListener("click", async () => {
+		
+	
+		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+		// Get the text content and remove the "home/" prefix if it exists
+		this.moveToParent();		
+
+	});
+
+
+
+
+
+
 
 	// Create the bottom section (flexible height)
 	const bottomSection = leftColumn.createDiv();
@@ -773,16 +852,15 @@ class MyPopupModal extends Modal {
 	// console.log(JSON.stringify(rootStructure, null, 2));  
 
 
-	var tagsTree = this.generateFinalTagsStructure(this.app);
-	// 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
+	// var tagsTree = this.generateFinalTagsStructure(this.app);
 
-// console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
+	// console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
 	// testing this function 
 	// this.folderMetadataFileCreation("tree/foreign/super/test/another/please/tree"); // Create the metadata files for the home path
 
 
-
-	var betterTagsTree =  await this.extractPathsFromTreeMakeMetaExtractFilesFromMetaMakeTree(this.app);
+	// 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
+	var betterTagsTree =  await this.finalCompleteTree(this.app);
 	console.log("Better Tags Tree:", JSON.stringify(betterTagsTree, null, 2));
 
 	// this.renderFileTreeInModal(tagsTree);
@@ -827,7 +905,7 @@ class MyPopupModal extends Modal {
 
 
 
-	
+
 
 
   }
@@ -839,3 +917,4 @@ class MyPopupModal extends Modal {
 }
 
 
+                                                                                                                                  
