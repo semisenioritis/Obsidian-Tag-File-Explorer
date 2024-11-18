@@ -634,8 +634,25 @@ class MyPopupModal extends Modal {
 	  
 		// Clear any previous content
 		descriptionDiv.innerHTML = "";
-	  
+
+
+		const legendDiv = document.querySelector(".legend");
+		if (!legendDiv) {
+			console.error('Div with class "legend" not found!');
+			return;
+		  }
+		
+		  // Clear any previous content
+		  legendDiv.innerHTML = "";
+		  
+		  
+		  
 		if (metadata) {
+
+			const legendContainer = document.createElement("div");
+			
+
+
 		  // Create a structured HTML representation of the metadata
 		  const metadataContainer = document.createElement("div");
 	  
@@ -648,7 +665,20 @@ class MyPopupModal extends Modal {
 		  const metadataList = document.createElement("ul");
 		  for (const [key, value] of Object.entries(metadata)) {
 			if (key === "legend") {
-				continue
+
+
+		  // Add a header
+		  const legendHeader = document.createElement("h3");
+		  legendHeader.textContent = `Legend`;
+		  legendContainer.appendChild(legendHeader);
+		  
+		  		const legendList = document.createElement("ul");
+				  for (const item of metadata.legend) {
+					const listItem = document.createElement("li");
+					listItem.textContent = item;
+					legendList.appendChild(listItem);
+				  }
+				  legendContainer.appendChild(legendList);
 			} else {
 			const listItem = document.createElement("li");
 			listItem.textContent = `${key}: ${value}`;
@@ -656,9 +686,11 @@ class MyPopupModal extends Modal {
 			}
 		  }
 	  
+		  
 		  metadataContainer.appendChild(metadataList);
 	  
 		  // Append the metadataContainer to the descriptionDiv
+		  legendDiv.appendChild(legendContainer);
 		  descriptionDiv.appendChild(metadataContainer);
 		} else {
 		  // If no metadata was found
@@ -681,6 +713,22 @@ class MyPopupModal extends Modal {
 		// Clear any previous content
 		descriptionDiv.innerHTML = "";
 	  
+	  
+
+		const legendDiv = document.querySelector(".legend");
+		if (!legendDiv) {
+			console.error('Div with class "legend" not found!');
+			return;
+		  }
+		
+		  // Clear any previous content
+		  legendDiv.innerHTML = "";
+		  
+
+
+
+
+		
 		// Create a structured HTML representation of the metadata
 		const metadataContainer = document.createElement("div");
 
@@ -693,6 +741,7 @@ class MyPopupModal extends Modal {
 
 	}
 	  }
+
 	  
 
 
@@ -811,6 +860,7 @@ class MyPopupModal extends Modal {
 	bottomSection_right.classList.add("rect_border");
 	bottomSection_right.style.flex = "1"; // Takes the remaining height
 	bottomSection_right.createEl("span", { text: "Legend" });
+	bottomSection_right.classList.add("legend");
 
 
 
