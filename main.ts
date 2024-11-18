@@ -742,13 +742,52 @@ class MyPopupModal extends Modal {
 	}
 	  }
 
+
+	  async fetchFileMetadata(filePath: string) {
+		// Check if the file exists
+		const fileExists = await this.app.vault.adapter.exists(filePath);
+	  
+		if (!fileExists) {
+		  console.log(`File does not exist: ${filePath}`);
+		  return null;
+		}
+	  
+		// Read the file's contents
+		const fileContents = await this.app.vault.adapter.read(filePath);
+		console.log("File Contents:", fileContents);
+	  
+		// Extract metadata from YAML frontmatter
+		const metadataMatch = fileContents.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+		if (metadataMatch) {
+		  const yamlMetadata = metadataMatch[1];
+		  console.log("YAML Metadata Content:", yamlMetadata);
+	  
+		  // Parse the YAML frontmatter
+		  try {
+			const metadata = parseYaml(yamlMetadata);
+			console.log(`Parsed Metadata for ${filePath}:`, metadata);
+			return metadata;
+		  } catch (error) {
+			console.error("Error parsing YAML Metadata:", error);
+		  }
+		} else {
+		  console.log(`No metadata found in ${filePath}`);
+		}
+	  
+		return null;
+	  }
+	  
 	  
 
 
-// write code to render legend here
+
 // then write code to extract the metadata fo specific files
+	// already written fnction to pull meta data. 
+	// now we have to combine it with the data present in the title attribute of the file
+	// then we have to write a function to ppull the file path from title attribute 
 // function to render this in the description section
-// merge this function itnot render main view function so that it is all called at once 
+// modify the render main view function to setup event listeners for each file
+
 	  
   async onOpen() {
     // const { contentEl } = this;
