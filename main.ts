@@ -5,6 +5,7 @@ import { CachedMetadata } from 'obsidian';
 import { normalizePath } from 'obsidian';
 import { setIcon } from "obsidian";
 import { listeners } from 'process';
+import { parseYaml } from "obsidian";
 
 interface TreeNode {
 	name: string;
@@ -368,6 +369,9 @@ class MyPopupModal extends Modal {
 	}
 
 
+
+	this.renderFolderMetadata(tagPath); 
+
 		if (tagContents) {
 			// Render subfolders (children tags)
 			tagContents.childrenTags.forEach(childTag => {
@@ -422,7 +426,7 @@ class MyPopupModal extends Modal {
 
 			if (!fileExists) {
 				// File doesn't exist, create it
-				await this.app.vault.create(fileName, `# Metadata for ${cumulativePath}`);
+				await this.app.vault.create(fileName, `---\ndesc: desc of this file \n---`);
 				// console.log(`File "${fileName}" created successfully.`);
 			} else {
 				// console.log(`File "${fileName}" already exists.`);
@@ -576,9 +580,127 @@ class MyPopupModal extends Modal {
 		console.log("Parent Path 2:", parentPath);
 	  }
 	  
+	async fetchFolderMetadata(inputPath: string) {
+		const tagFolder = ".tagfoldermeta"; // Folder name
+		const segments = inputPath.split("/"); // Split the path into segments
+		let cumulativePath = "";
 	  
+		for (const [index, segment] of segments.entries()) {
+		  // Build the cumulative file path
+		  cumulativePath += (index === 0 ? "" : "_-_-_") + segment;
+
+		}
+		const fileName = `${tagFolder}/${cumulativePath}.md`; // Construct the file path
+		console.log("File Name:", fileName);
+	  // Check if the file exists
+	  const fileExists = await this.app.vault.adapter.exists(fileName);
+  
+	  if (fileExists) {
+		// Read the file's contents
+		const fileContents = await this.app.vault.adapter.read(fileName);
+		// console.log("File Contents:", fileContents);
+		// Extract the metadata (assuming it's in YAML frontmatter)
+		const metadataMatch = fileContents.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+		// console.log("Metadata Match:", metadataMatch);
+		if (metadataMatch) {
+		  const yamlMetadata = metadataMatch[1];
+		  const metadata = parseYaml(yamlMetadata);
+		  console.log(`Metadata for ${fileName}:`, metadata);
+  
+		  // You can return, store, or process the metadata as needed
+		  return metadata;
+		} else {
+		  console.log(`No metadata found in ${fileName}`);
+		}
+	  } else {
+		console.log(`File does not exist: ${fileName}`);
+	  }		
+	  }
+			
+	  
+	  async renderFolderMetadata(path: string) {
+
+		if (path !== "") {
+		// Call the fetchFolderMetadata function to get metadata
+		const metadata = await this.fetchFolderMetadata(path);
+	  
+		// Find the target div with the class "description"
+		const descriptionDiv = document.querySelector(".description");
+	  
+		if (!descriptionDiv) {
+		  console.error('Div with class "description" not found!');
+		  return;
+		}
+	  
+		// Clear any previous content
+		descriptionDiv.innerHTML = "";
+	  
+		if (metadata) {
+		  // Create a structured HTML representation of the metadata
+		  const metadataContainer = document.createElement("div");
+	  
+		  // Add a header
+		  const header = document.createElement("h3");
+		  header.textContent = `Path: home/${path}`;
+		  metadataContainer.appendChild(header);
+	  
+		  // Add metadata as key-value pairs
+		  const metadataList = document.createElement("ul");
+		  for (const [key, value] of Object.entries(metadata)) {
+			if (key === "legend") {
+				continue
+			} else {
+			const listItem = document.createElement("li");
+			listItem.textContent = `${key}: ${value}`;
+			metadataList.appendChild(listItem);
+			}
+		  }
+	  
+		  metadataContainer.appendChild(metadataList);
+	  
+		  // Append the metadataContainer to the descriptionDiv
+		  descriptionDiv.appendChild(metadataContainer);
+		} else {
+		  // If no metadata was found
+		  const noMetadataMessage = document.createElement("p");
+		  noMetadataMessage.textContent = `No metadata found for the path: ${path}`;
+		  descriptionDiv.appendChild(noMetadataMessage);
+		}
+	}
+	else{
+
+		
+		// Find the target div with the class "description"
+		const descriptionDiv = document.querySelector(".description");
+	  
+		if (!descriptionDiv) {
+		  console.error('Div with class "description" not found!');
+		  return;
+		}
+	  
+		// Clear any previous content
+		descriptionDiv.innerHTML = "";
+	  
+		// Create a structured HTML representation of the metadata
+		const metadataContainer = document.createElement("div");
+
+		// Add a header
+		const header = document.createElement("h3");
+		header.textContent = `Home Folder`;
+		metadataContainer.appendChild(header);
+		// Append the metadataContainer to the descriptionDiv
+		descriptionDiv.appendChild(metadataContainer);		  
+
+	}
+	  }
 	  
 
+
+// write code to render legend here
+// then write code to extract the metadata fo specific files
+// function to render this in the description section
+// merge this function itnot render main view function so that it is all called at once 
+	  
   async onOpen() {
     // const { contentEl } = this;
 	const { modalEl, contentEl } = this;
@@ -673,6 +795,9 @@ class MyPopupModal extends Modal {
 	midSection_right.classList.add("rect_border");
 	midSection_right.style.flex = "3"; // Fixed height for the top section
 	midSection_right.createEl("span", { text: "Description" });
+	midSection_right.classList.add("description");
+
+
 
 
 
@@ -857,6 +982,7 @@ class MyPopupModal extends Modal {
 	// console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
 	// testing this function 
 	// this.folderMetadataFileCreation("tree/foreign/super/test/another/please/tree"); // Create the metadata files for the home path
+	
 
 
 	// 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
@@ -879,8 +1005,6 @@ class MyPopupModal extends Modal {
 
 	// Call the renderFileExplorer method with the tagPath
 	this.renderFileExplorer.call(this, hometagPath);
-
-
 
 
 
