@@ -358,55 +358,79 @@ class MyPopupModal extends Modal {
 
 
 
-	const container = document.querySelector(".tag_path_identifier") as HTMLElement;
-	// gotta change this to the right container
-	if (container) {
-		container.innerHTML = ""; // Clear any existing content
+		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+		// gotta change this to the right container
+		if (container) {
+			container.innerHTML = ""; // Clear any existing content
+			
+			container.textContent = "home/" + tagPath;
+			// write code to click on this 
+
+		}
+
+
+
+		this.renderFolderMetadata(tagPath); 
 		
-		container.textContent = "home/" + tagPath;
-		// write code to click on this 
+		const mainExplorerContainer = document.querySelector(".file_exp") as HTMLElement;
 
-	}
+			if (tagContents) {
+				// Render subfolders (children tags)
+				tagContents.childrenTags.forEach(childTag => {
+					// console.log("Child Tag:", childTag);
+					// Create each subfolder block (square)
+					const folderBlock = explorerContainer.createEl("div", { cls: "folder-block" });
+					folderBlock.createEl("div", { cls: "folder-icon", text: "📁" }); // Folder icon
+					folderBlock.createEl("div", { cls: "folder-name", text: childTag }); // Folder name
 
 
 
-	this.renderFolderMetadata(tagPath); 
-
-		if (tagContents) {
-			// Render subfolders (children tags)
-			tagContents.childrenTags.forEach(childTag => {
-				// console.log("Child Tag:", childTag);
-				// Create each subfolder block (square)
-				const folderBlock = explorerContainer.createEl("div", { cls: "folder-block" });
-				folderBlock.createEl("div", { cls: "folder-icon", text: "📁" }); // Folder icon
-				folderBlock.createEl("div", { cls: "folder-name", text: childTag }); // Folder name
-
-				const newPath = tagPath ? `${tagPath}/${childTag}` : childTag;
-				// Tooltip with folder details on hover
-				folderBlock.setAttribute("title", `Folder: ${newPath}`);
-				
-
-				// Add click event to navigate into subfolder with correctly formatted path
-				folderBlock.addEventListener("click", () => {
+					const newPath = tagPath ? `${tagPath}/${childTag}` : childTag;
+					// Tooltip with folder details on hover
+					folderBlock.setAttribute("title", `Folder: ${newPath}`);
 					
-					this.renderFileExplorer.call(this, newPath);
-					
+
+					// Add click event to navigate into subfolder with correctly formatted path
+					folderBlock.addEventListener("click", () => {
+						
+						this.renderFileExplorer.call(this, newPath);
+						
+					});
+
 				});
 
-			});
+				// Render files
+				tagContents.files.forEach(file => {
+					// console.log("File:", file);
+					// Create each file block (square)
+					const fileBlock = explorerContainer.createEl("div", { cls: "file-block" });
+					fileBlock.createEl("div", { cls: "file-icon", text: "📄" }); // File icon
+					fileBlock.createEl("div", { cls: "file-name", text: file.name }); // File name
 
-			// Render files
-			tagContents.files.forEach(file => {
-				// console.log("File:", file);
-				// Create each file block (square)
-				const fileBlock = explorerContainer.createEl("div", { cls: "file-block" });
-				fileBlock.createEl("div", { cls: "file-icon", text: "📄" }); // File icon
-				fileBlock.createEl("div", { cls: "file-name", text: file.name }); // File name
+					// Tooltip with file details on hover
+					// fileBlock.setAttribute("title", `Path: ${file.path}\nSize: ${file.size} bytes\nCreated: ${file.created}\nModified: ${file.modified}`);
 
-				// Tooltip with file details on hover
-				fileBlock.setAttribute("title", `Path: ${file.path}\nSize: ${file.size} bytes\nCreated: ${file.created}\nModified: ${file.modified}`);
-			});
-		}
+
+
+					// Add click event to navigate into subfolder with correctly formatted path
+					fileBlock.addEventListener("click", async (e: MouseEvent) => {
+		
+						let fileMetadata = await this.fetchFileMetadata.call(this, file.path);
+						fileMetadata.path = file.path;
+						fileMetadata.size = file.size;
+						fileMetadata.created = file.created;
+						fileMetadata.modified = file.modified;
+
+						this.renderFileMetadata(fileMetadata)
+						e.stopPropagation();
+					});
+
+				});
+
+				
+			}
+
+			// Add click event to navigate into subfolder with correctly formatted path
 
 
 	}
@@ -580,7 +604,7 @@ class MyPopupModal extends Modal {
 		console.log("Parent Path 2:", parentPath);
 	  }
 	  
-	async fetchFolderMetadata(inputPath: string) {
+	  async fetchFolderMetadata(inputPath: string) {
 		const tagFolder = ".tagfoldermeta"; // Folder name
 		const segments = inputPath.split("/"); // Split the path into segments
 		let cumulativePath = "";
@@ -749,7 +773,7 @@ class MyPopupModal extends Modal {
 	  
 		if (!fileExists) {
 		  console.log(`File does not exist: ${filePath}`);
-		  return null;
+		  return {};
 		}
 	  
 		// Read the file's contents
@@ -772,21 +796,66 @@ class MyPopupModal extends Modal {
 		  }
 		} else {
 		  console.log(`No metadata found in ${filePath}`);
+		  return {}
 		}
 	  
 		return null;
+	  }
+	  
+	  renderFileMetadata(metadata: { [key: string]: any }) {
+		// Find the target div with the class "description"
+		const descriptionDiv = document.querySelector(".description");
+	  
+		if (!descriptionDiv) {
+		  console.error('Div with class "description" not found!');
+		  return;
+		}
+	  
+		// Clear any previous content
+		descriptionDiv.innerHTML = "";
+	  
+		if (metadata && Object.keys(metadata).length > 0) {
+		  // Create a structured HTML representation of the metadata
+		  const metadataContainer = document.createElement("div");
+	  
+		  // Add a header
+		  const header = document.createElement("h3");
+		  header.textContent = `File Metadata`;
+		  metadataContainer.appendChild(header);
+	  
+		  // Add the metadata as key-value pairs
+		  const metadataList = document.createElement("ul");
+		  for (const [key, value] of Object.entries(metadata)) {
+			const listItem = document.createElement("li");
+	  
+			if (Array.isArray(value)) {
+			  // Render arrays as a comma-separated string
+			  listItem.textContent = `${key}: ${value.join(", ")}`;
+			} else {
+			  // Render simple key-value pairs
+			  listItem.textContent = `${key}: ${value}`;
+			}
+	  
+			metadataList.appendChild(listItem);
+		  }
+	  
+		  metadataContainer.appendChild(metadataList);
+	  
+		  // Append the metadataContainer to the descriptionDiv
+		  descriptionDiv.appendChild(metadataContainer);
+		} else {
+		  // If no metadata was found
+		  const noMetadataMessage = document.createElement("p");
+		  noMetadataMessage.textContent = `No metadata available for this file.`;
+		  descriptionDiv.appendChild(noMetadataMessage);
+		}
 	  }
 	  
 	  
 
 
 
-// then write code to extract the metadata fo specific files
-	// already written fnction to pull meta data. 
-	// now we have to combine it with the data present in the title attribute of the file
-	// then we have to write a function to ppull the file path from title attribute 
-// function to render this in the description section
-// modify the render main view function to setup event listeners for each file
+
 
 	  
   async onOpen() {
