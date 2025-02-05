@@ -851,8 +851,18 @@ class MyPopupModal extends Modal {
 		}
 	  }
 	  
-	  
 
+// many of my views individually have multiple pages that coexist in the same locations.
+// i want to learn how to allow them to exists parallelly in the same location programatically
+// i also want to learn how drag and drop stuff functions and how it is implemented	  
+
+// after this i will be refactoring the entire visual chunking and sectioning of the modal.
+// currently its in a proof of concept, barly works kinda state. 
+// 	  if i want to implement the multi page section issue adn stuff in this  plugin, then i need a better and smoother more object oriented ui
+
+//  also need to update the codebase structure file in obsidian
+
+// create folder and view buttons
 
 
 
