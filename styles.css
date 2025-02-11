@@ -17,8 +17,102 @@ If your plugin does not need CSS, delete this file.
 
 
 .rect_border{
-    border: 1px solid rgb(86, 86, 86);
-    margin: 2px;
+  border: 1px solid rgb(86, 86, 86);
+  margin: 5px;
+}
+
+
+
+
+/* =========================================================== */
+/* css code i need for the design */
+
+
+
+.explorer-modal {
+max-width: 96%;
+max-height: 96%;
+overflow: hidden;
+}
+
+
+
+
+
+.refresh-header-button:before {
+font-family: Inter, sans-serif;
+font-weight: 100;
+
+}
+
+.refresh-header-button {
+transition: opacity 0.15s ease-in-out;
+cursor: var(--cursor);
+position: absolute;
+top: var(--size-4-2);
+top: 6px;
+inset-inline-end: var(--size-4-10);
+font-size: 16px;
+line-height: 20px;
+height: 24px;
+width: 24px;
+padding: 0 var(--size-2-2);
+border-radius: var(--radius-s);
+color: var(--text-muted);
+padding-top: 4px;
+padding-right: 21px;
+
+}
+
+.refresh-header-button:hover {
+background-color: var(--background-modifier-hover);
+color: var(--text-normal);
+color: var(--interactive-accent);
+}
+
+/* .refresh-header-button > svg {
+width: 16px;
+height: 16px;
+
+} */
+
+
+
+
+.home-header-button:before {
+font-family: Inter, sans-serif;
+font-weight: 300;
+
+}
+
+.home-header-button {
+transition: opacity 0.15s ease-in-out;
+cursor: var(--cursor);
+position: absolute;
+top: var(--size-4-2);
+top: 6px;
+inset-inline-end: var(--size-4-18);
+font-size: 16px;
+line-height: 20px;
+height: 24px;
+width: 24px;
+padding: 0 var(--size-2-2);
+border-radius: var(--radius-s);
+color: var(--text-muted);
+padding-top: 4px;
+padding-right: 21px;
+margin-right: -3px;
+}
+
+.home-header-button:hover {
+background-color: var(--background-modifier-hover);
+color: var(--text-normal);
+color: var(--interactive-accent);
+}
+
+
+body{
+--size-height: 30px;
 }
 
 
@@ -26,257 +120,269 @@ If your plugin does not need CSS, delete this file.
 
 /* =========================================================== */
 
-.explorer-modal {
-    max-width: 96%;
-    max-height: 96%;
-    overflow: hidden;
+.main_grid{
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+
+
+
+  grid-template-areas: 
+  "B B C"
+  "F H D"
+  "G I D"
+  "G J D"
+  "G J E"
+  "G K E";
+  grid-template-columns: minmax(180px, 14fr) 35fr minmax(240px, 17fr); /* Distribution i feel is nice */
+  grid-template-columns: 3fr 9fr 4fr; /* Original Distribution */
+  grid-template-columns: minmax(180px,3fr) 9fr minmax(240px, 4fr); /* Original Distribution with minmax */
+  grid-template-rows: 30px 30px 30px 3fr 1fr 30px; 
+
+
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid rgb(86, 86, 86);
+  margin: 5px;
+
+
+  max-height: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  min-width: 100%;
 }
 
 
-.refresh-header-button:before {
-    font-family: Inter, sans-serif;
-    font-weight: 300;
-
-}
-
-.refresh-header-button {
-    transition: opacity 0.15s ease-in-out;
-    cursor: var(--cursor);
-    position: absolute;
-    top: var(--size-4-2);
-    inset-inline-end: var(--size-4-10);
-    font-size: 16px;
-    line-height: 20px;
-    height: 24px;
-    width: 24px;
-    padding: 0 var(--size-2-2);
-    border-radius: var(--radius-s);
-    color: var(--text-muted);
-
-}
-
-.refresh-header-button:hover {
-    color: var(--interactive-accent);
-
-}
-
-.home-header-button:before {
-    font-family: Inter, sans-serif;
-    font-weight: 300;
-
-}
-
-.home-header-button {
-    transition: opacity 0.15s ease-in-out;
-    cursor: var(--cursor);
-    position: absolute;
-    top: var(--size-4-2);
-    inset-inline-end: var(--size-4-18);
-    font-size: 16px;
-    line-height: 20px;
-    height: 24px;
-    width: 24px;
-    padding: 0 var(--size-2-2);
-    border-radius: var(--radius-s);
-    color: var(--text-muted);
-
-}
-
-.home-header-button:hover {
-    color: var(--interactive-accent);
-
-}
+.itemB { grid-area: B; color: black; background-color: lightblue; }
+.itemC { grid-area: C; color: black; background-color: lightcoral; }
+.itemD { grid-area: D; color: black; background-color: lightgreen; }
+.itemE { grid-area: E; color: black; background-color: lightpink; }
+.itemF { grid-area: F; color: black; background-color: lightyellow; }
+.itemG { grid-area: G; color: black; background-color: lightgray; }
+.itemH { grid-area: H; color: black; background-color: lightseagreen; }
+.itemI { grid-area: I; color: black; background-color: lightskyblue; }
+.itemJ { grid-area: J; color: black; background-color: lightsteelblue; }
+.itemK { grid-area: K; color: black; background-color: lightgoldenrodyellow; }
 
 
 
-body{
-    --size-height: 30px;
-}
 
 
 
-  /* ==================================== */
+
+
+
+
+
+
+
+
+
 
 
 
 .search-container {
-    position: relative;
-}
+  position: relative;
+  height: 100%;
+  
+  }
+  
+  .search-input{
+  
+  margin: 2px;
+  width: 98%;
+  height: 80%!important;
+  }
+  
+
+
+/* ==================================== */
+
+
+
+
 
 .results-container {
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 5px;
-    background: #343434;
-    position: absolute;
-    width: 97%;
-    z-index: 10;
-    border-radius: 6px;
-    margin: 3px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 5px;
+  background: #343434;
+  position: absolute;
+  width: 97%;
+  z-index: 10;
+  border-radius: 6px;
+  margin: 3px;
 }
 
 .result-item {
-    padding: 4px 8px;
-    cursor: pointer;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 
 .result-item:hover {
-    background: #141414;
+  background: #141414;
 }
 
 
 
 
-  /* ==================================== */
+/* ==================================== */
 
 
 
 /* Tree container styling */
 .file-tree-container {
-    padding: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    max-height: 100%;
-    overflow-y: auto;
-    max-width: 230px;
-  }
-  
-.arrow{
-  cursor: pointer;
-  width: 20px;
+  padding: 10px;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  max-height: 100%;
+  overflow-y: auto;
+  max-width: 230px;
 }
-  
-  /* Label styling */
-  .label {
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
+
+.arrow{
+cursor: pointer;
+width: 20px;
+}
+
+/* Label styling */
+.label {
+  cursor: pointer;
+  font-weight: bold;
+}
+
 .hidden {
-    display: none;
-  }
+  display: none;
+}
 
-  .children {
-    margin-left: 12px;
-    display: none;
-  }
+.children {
+  margin-left: 12px;
+  display: none;
+}
+
+.blocks {
+  max-width: 100%;
+  max-height: 100%;
   
-  .blocks {
-    max-width: 100%;
-    max-height: 100%;
-    
-  }
+}
 
 
 
-  /* ==================================== */
+/* ==================================== */
 
 
 
-  
+
 /* File explorer container */
 .file-explorer-container {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 10px;
-	padding: 10px;
-  background-color: transparent;
-	border-radius: 8px;
+display: flex;
+flex-wrap: wrap;
+gap: 8px;
+padding: 10px;
+background-color: transparent;
+border-radius: 8px;
+
+
+
+
 }
 
 
 .file_exp{
-  overflow-y: auto;
+overflow-y: auto;
 }
 
 /* Individual file block (square) */
 .file-block, .folder-block {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	width: 120px;  /* Fixed width */
-	height: 120px; /* Fixed height (to maintain square shape) */
-	background-color: #373737;
-	border: 1px solid #ccc;
-	border-radius: 5px;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	cursor: pointer;
-	transition: transform 0.2s;
-	overflow: hidden;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+width: 120px;  /* Fixed width */
+height: 120px; /* Fixed height (to maintain square shape) */
+background-color: #373737;
+border: 1px solid #ccc;
+border-radius: 5px;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+cursor: pointer;
+transition: transform 0.2s;
+overflow: hidden;
 }
 
 
 /* File icon styling */
 .file-icon, .folder-icon {
-	font-size: 24px;
-	margin-bottom: 5px;
+font-size: 24px;
+margin-bottom: 5px;
 }
 
 /* File name styling */
 .folder-name, .file-name {
-	font-size: 12px;
-	color: #fff;
-	text-align: center;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	width: 100%;
+font-size: 12px;
+color: #fff;
+text-align: center;
+overflow: hidden;
+text-overflow: ellipsis;
+width: 100%;
 }
 
 
 .folder-block:hover, .file-block:hover {
-	transform: scale(1.05);
-	background-color: #494949;
+transform: scale(1.05);
+background-color: #494949;
 }
 
 
 .row_folder_holder{
-  display: flex;
+display: flex;
 
 }
 
 .placeholder{
-  visibility: hidden;
+visibility: hidden;
 }
 
 
 .file_label{
-  white-space: nowrap;
-  max-width: 210px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+white-space: nowrap;
+max-width: 210px;
+overflow: hidden;
+text-overflow: ellipsis;
 }
 
 
-  /* ========= All Above are Confirm ========= */
+/* ========= All Above are Confirm ========= */
+
+.path_bar{
+  display: flex;
+}
 
 
 
+.tag_path_identifier{
+  flex: 1;
+}
 
-  .tag_path_identifier{
-    flex: 1;
-  }
 
 
-  
-  .backup-button:before {
-  font-family: Inter, sans-serif;
-  font-weight: 300;
+.backup-button:before {
+font-family: Inter, sans-serif;
+font-weight: 300;
 
 }
 
 .backup-button{
-  transition: opacity 0.15s ease-in-out;
-  cursor: var(--cursor);
-  align-content: center;
-  text-align: center;
-  border-radius: var(--radius-s);
-  width: var(--size-height); /* Square width */
-  aspect-ratio: 1; /* Ensures it's a square */
+transition: opacity 0.15s ease-in-out;
+cursor: var(--cursor);
+align-content: center;
+text-align: center;
+border-radius: var(--radius-s);
+width: var(--size-height); /* Square width */
+aspect-ratio: 1; /* Ensures it's a square */
 
 }
 
 .backup-button:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
   color: var(--interactive-accent);
-
 }

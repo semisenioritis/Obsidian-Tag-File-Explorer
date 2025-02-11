@@ -1,6 +1,6 @@
 {
-	"id": "file-manager",
-	"name": "File Manager",
+	"id": "file-design",
+	"name": "File Designer",
 	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Nested tag based file management plugin for obsidian.",
