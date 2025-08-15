@@ -1,6 +1,7 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
+import postBuildPlugin from "./esbuild-plugin/copyFiles.js"
 
 const banner =
 `/*
@@ -11,6 +12,7 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = (process.argv[2] === "production");
 
+const vaultPath = process.env.VAULT_PATH;
 const context = await esbuild.context({
 	banner: {
 		js: banner,
@@ -39,6 +41,7 @@ const context = await esbuild.context({
 	treeShaking: true,
 	outfile: "main.js",
 	minify: prod,
+	plugins: [postBuildPlugin.postBuildPlugin(vaultPath, prod)]
 });
 
 if (prod) {
