@@ -5,6 +5,8 @@ import { setIcon } from "obsidian";
 import { listeners } from 'process';
 import { parseYaml } from "obsidian";
 
+import Layout from './Layout';
+
 
 interface TreeNode {
     name: string;
@@ -87,222 +89,159 @@ class MyPopupModal extends Modal {
         buttons_beside_close.forEach((b) => {
             me.makeButton(me.$modal_wrapper, b)
         })
+        let layout_config = [
+        {
+            type: "Column",
+            width: 3,
+            sections: [{
+                classNames: "rect_blocks",
+                height: "var(--size-height)",
+                onRender(wrapper: HTMLElement){
+                    wrapper.style.display = "flex";
+                    wrapper.style.flex = 'column';
+                    wrapper.createEl("span", { text: "File Path" });
+                    
+                    const addressOfLocation = wrapper.createDiv();
+                    addressOfLocation.classList.add("tag_path_identifier");
+
+                    const backupButton = wrapper.createDiv();
+                    backupButton.classList.add("backup-button");
+                    setIcon(backupButton, "folder-output");
+
+                    backupButton?.addEventListener("click", async () => {
+                        
+                    
+                        const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+                        // Get the text content and remove the "home/" prefix if it exists
+                        me.moveToParent();		
 
-        // Set up flex container to hold two columns
-        this.$modal_content.style.display = "flex";
-        this.$modal_content.style.flexDirection = "row";
-        this.$modal_content.classList.add("blocks");
-
-        // Create the left (3x width) column
-        const leftColumn = this.$modal_content.createDiv();
-        leftColumn.classList.add("rect_border");
-        leftColumn.style.flex = "3";  // 3 parts of the ratio
-
-
-        // Create the right (1x width) column
-        const rightColumn = this.$modal_content.createDiv();
-        rightColumn.classList.add("rect_border");
-        rightColumn.style.flex = "1";  // 1 part of the ratio
-
-
-
-        // Inside the leftColumn definition
-        rightColumn.style.display = "flex";
-        rightColumn.classList.add("blocks");
-        rightColumn.style.flexDirection = "column";
-
-        // Create the top section (thin)
-        const topSection_right = rightColumn.createDiv();
-        topSection_right.classList.add("rect_border");
-        topSection_right.style.height = "var(--size-height)"; // Fixed height for the top section
-        // topSection_right.createEl("span", { text: "Search..." });
-
-
-
-        // Create the mid section (thin)
-        const midSection_right = rightColumn.createDiv();
-        midSection_right.classList.add("rect_border");
-        midSection_right.style.flex = "3"; // Fixed height for the top section
-        midSection_right.createEl("span", { text: "Description" });
-        midSection_right.classList.add("description");
-
-
-
-
-
-
-
-
-
-
-        // Create the bottom section (flexible height)
-        const bottomSection_right = rightColumn.createDiv();
-        bottomSection_right.classList.add("rect_border");
-        bottomSection_right.style.flex = "1"; // Takes the remaining height
-        bottomSection_right.createEl("span", { text: "Legend" });
-        bottomSection_right.classList.add("legend");
-
-
-
-
-        // Inside the leftColumn definition
-        leftColumn.style.display = "flex";
-        leftColumn.style.flexDirection = "column";
-
-        // Create the top section (thin)
-        const topSection = leftColumn.createDiv();
-        topSection.classList.add("rect_border");
-
-        
-        topSection.style.height = "var(--size-height)"; // Fixed height for the top section
-        topSection.style.display = "flex"; // Set display to flex for the top section
-        
-
-        
-        // topSection.createEl("span", { text: "File Path" });
-
-
-
-        const addressOfLocation = topSection.createDiv();
-        addressOfLocation.classList.add("tag_path_identifier");
-
-        const backupButton = topSection.createDiv();
-        backupButton.classList.add("backup-button");
-        setIcon(backupButton, "folder-output");
-
-        backupButton?.addEventListener("click", async () => {
-            
-        
-            const container = document.querySelector(".tag_path_identifier") as HTMLElement;
-            // Get the text content and remove the "home/" prefix if it exists
-            this.moveToParent();		
-
-        });
-
-
-
-
-
-
-
-        // Create the bottom section (flexible height)
-        const bottomSection = leftColumn.createDiv();
-        bottomSection.classList.add("rect_border");
-        bottomSection.style.flex = "1"; // Takes the remaining height
-
-
-
-
-
-        // Inside the bottomSection definition
-        bottomSection.style.display = "flex"; // Set display to flex for the bottom section
-        bottomSection.style.flexDirection = "row"; // Arrange children in a row
-        bottomSection.classList.add("blocks");
-
-        // Create the left (1x width) column of the bottom section
-        const leftBottomColumn = bottomSection.createDiv();
-        leftBottomColumn.classList.add("rect_border");
-        leftBottomColumn.style.flex = "1"; // 1 part of the ratio
-
-        // Create the right (3x width) column of the bottom section
-        const rightBottomColumn = bottomSection.createDiv();
-        rightBottomColumn.classList.add("rect_border");
-        rightBottomColumn.style.flex = "3"; // 3 parts of the ratio
-
-
-        // Inside the leftColumn definition
-        leftBottomColumn.style.display = "flex";
-        leftBottomColumn.style.flexDirection = "column";
-        leftBottomColumn.classList.add("blocks");
-
-        // Create the top section (thin)
-        const topSection_of_left_bottom = leftBottomColumn.createDiv();
-        topSection_of_left_bottom.classList.add("rect_border");
-        topSection_of_left_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-        topSection_of_left_bottom.createEl("span", { text: "Sort system" });
-
-
-
-        // Create the bottom section (flexible height)
-        
-        const bottomSection_of_left_bottom = leftBottomColumn.createEl("div", { cls: "file-tree-container" });
-        bottomSection_of_left_bottom.classList.add("rect_border");
-        bottomSection_of_left_bottom.style.flex = "1"; // Takes the remaining height
-        bottomSection_of_left_bottom.createEl("span", { text: "File hierarchy tree" });
-        
-
-
-
-        // Inside the leftColumn definition
-        rightBottomColumn.style.display = "flex";
-        rightBottomColumn.style.flexDirection = "column";
-        rightBottomColumn.classList.add("blocks");
-
-        // Create the top section (thin)
-        const topSection_of_right_bottom = rightBottomColumn.createDiv();
-        topSection_of_right_bottom.classList.add("rect_border");
-        topSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-        topSection_of_right_bottom.createEl("span", { text: "Tabs and open folders" });
-
-
-        // Create the mid section (thin)
-        const midSection_of_right_bottom = rightBottomColumn.createDiv();
-        midSection_of_right_bottom.classList.add("rect_border");
-        midSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-        midSection_of_right_bottom.createEl("span", { text: "Actions in current folder" });
-
-
-
-        // Create the bottom section (flexible height)
-        const bottomSection_of_right_bottom = rightBottomColumn.createEl("div", { cls: "" });
-        bottomSection_of_right_bottom.classList.add("rect_border");
-        bottomSection_of_right_bottom.classList.add("file_exp");
-        bottomSection_of_right_bottom.style.flex = "1"; // Takes the remaining height
-        var main_view_container = bottomSection_of_right_bottom.createEl("div", { cls: "file-explorer-container" });
-        // bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
-
-
-
-
-
-
-
-
-        const searchContainer = topSection_right.createDiv({ cls: 'search-container' });
-        const searchInput = searchContainer.createEl('input', {
-            type: 'text',
-            placeholder: 'Search files...',
-        });
-        const resultsContainer = searchContainer.createDiv({ cls: 'results-container' });
-        resultsContainer.style.display = 'none'; // Hide by default
-
-
-
-        searchInput.addEventListener('input', async (event) => {
-            const query = (event.target as HTMLInputElement).value.toLowerCase();
-            
-            resultsContainer.empty(); // Clear previous results
-
-            // Toggle visibility of results container based on query
-            resultsContainer.style.display = query ? 'block' : 'none';
-            
-            if (query) {
-                const files = this.app.vault.getFiles();
-                const matchedFiles = files.filter(file => file.name.toLowerCase().includes(query));
-                
-                matchedFiles.forEach(file => {
-                    const fileItem = resultsContainer.createEl('div', { cls: 'result-item', text: file.name });
-                    fileItem.addEventListener('click', () => {
-                        console.log(`Selected file: ${file.name}`);
-                        // You can add functionality to open or preview the file here
-                        // TODO: Add functionality to open the parent of the clicked file
                     });
-                });
+                }
+            },{
+                classNames: "rect_blocks blocks",
+                flex_height: "1",
+                onRender: function (wrapper: HTMLElement) {
+                    wrapper.style.display = "flex";
+                    wrapper.style.flexDirection = "row";
+
+                    // Create the left (1x width) column of the bottom section
+                    const leftBottomColumn = wrapper.createDiv();
+                    leftBottomColumn.classList.add("rect_border");
+                    leftBottomColumn.style.flex = "1"; // 1 part of the ratio
+
+                    // Create the right (3x width) column of the bottom section
+                    const rightBottomColumn = wrapper.createDiv();
+                    rightBottomColumn.classList.add("rect_border");
+                    rightBottomColumn.style.flex = "3"; // 3 parts of the ratio
+
+
+                    // Inside the leftColumn definition
+                    leftBottomColumn.style.display = "flex";
+                    leftBottomColumn.style.flexDirection = "column";
+                    leftBottomColumn.classList.add("blocks");
+
+                    // Create the top section (thin)
+                    const topSection_of_left_bottom = leftBottomColumn.createDiv();
+                    topSection_of_left_bottom.classList.add("rect_border");
+                    topSection_of_left_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+                    topSection_of_left_bottom.createEl("span", { text: "Sort system" });
+
+                    // Create the bottom section (flexible height)
+                    const bottomSection_of_left_bottom = leftBottomColumn.createEl("div", { cls: "file-tree-container" });
+                    bottomSection_of_left_bottom.classList.add("rect_border");
+                    bottomSection_of_left_bottom.style.flex = "1"; // Takes the remaining height
+                    bottomSection_of_left_bottom.createEl("span", { text: "File hierarchy tree" });
+
+                    // Inside the leftColumn definition
+                    rightBottomColumn.style.display = "flex";
+                    rightBottomColumn.style.flexDirection = "column";
+                    rightBottomColumn.classList.add("blocks");
+
+                    // Create the top section (thin)
+                    const topSection_of_right_bottom = rightBottomColumn.createDiv();
+                    topSection_of_right_bottom.classList.add("rect_border");
+                    topSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+                    topSection_of_right_bottom.createEl("span", { text: "Tabs and open folders" });
+
+                    // Create the mid section (thin)
+                    const midSection_of_right_bottom = rightBottomColumn.createDiv();
+                    midSection_of_right_bottom.classList.add("rect_border");
+                    midSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+                    midSection_of_right_bottom.createEl("span", { text: "Actions in current folder" });
+
+                    // Create the bottom section (flexible height)
+                    const bottomSection_of_right_bottom = rightBottomColumn.createEl("div", { cls: "" });
+                    bottomSection_of_right_bottom.classList.add("rect_border");
+                    bottomSection_of_right_bottom.classList.add("file_exp");
+                    bottomSection_of_right_bottom.style.flex = "1"; // Takes the remaining height
+                    var main_view_container = bottomSection_of_right_bottom.createEl("div", { cls: "file-explorer-container" });
+                    bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
+                }
+            }]
+        },
+        {
+            type: "Column",
+            width: 1,
+            sections: [
+            {
+                height: "var(--size-height)",
+                classNames: "rect_blocks",
+                onRender(wrapper: HTMLElement){
+                    // Search Container
+                    const searchContainer = wrapper.createDiv({ cls: 'search-container' });
+                    const searchInput = searchContainer.createEl('input', {
+                        type: 'text',
+                        placeholder: 'Search files...',
+                    });
+                    const resultsContainer = searchContainer.createDiv({ cls: 'results-container' });
+                    resultsContainer.style.display = 'none'; // Hide by default
+
+
+
+                    searchInput.addEventListener('input', async (event) => {
+                        const query = (event.target as HTMLInputElement).value.toLowerCase();
+                        
+                        resultsContainer.empty(); // Clear previous results
+
+                        // Toggle visibility of results container based on query
+                        resultsContainer.style.display = query ? 'block' : 'none';
+                        
+                        if (query) {
+                            const files = me.app.vault.getFiles();
+                            debugger
+                            const matchedFiles = files.filter(file => file.name.toLowerCase().includes(query));
+                            
+                            matchedFiles.forEach(file => {
+                                const fileItem = resultsContainer.createEl('div', { cls: 'result-item', text: file.name });
+                                fileItem.addEventListener('click', () => {
+                                    console.log(`Selected file: ${file.name}`);
+                                    // You can add functionality to open or preview the file here
+                                    // TODO: Add functionality to open the parent of the clicked file
+                                });
+                            });
+                        }
+                    });
+                }
+            },
+            {
+                flex_height: "3",
+                classNames: "rect_blocks description",
+                onRender: function (wrapper: HTMLElement) {
+                wrapper.createEl("span", { text: "Description" });
+                }
+            },
+            {
+                flex_height: "1",
+                classNames: "rect_blocks legend",
+                onRender: function (wrapper: HTMLElement) {
+                wrapper.createEl("span", { text: "Legend" });
+                }
             }
-        });
+            ]
+        }
+        ];
 
-
-
+        let layout = new Layout(this.$modal_content, layout_config)
         // const rootStructure = this.getFolderStructure(this.app.vault.getRoot());
         // console.log(JSON.stringify(rootStructure, null, 2));  
 
@@ -1127,10 +1066,7 @@ class MyPopupModal extends Modal {
 		  noMetadataMessage.textContent = `No metadata available for this file.`;
 		  descriptionDiv.appendChild(noMetadataMessage);
 		}
-	  }
-	  
-
-
+	}
 }
 
 export default MyPopupModal
