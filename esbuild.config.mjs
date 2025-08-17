@@ -2,6 +2,8 @@ import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
 import postBuildPlugin from "./esbuild-plugin/copyFiles.js"
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env' })
 
 const banner =
 `/*
