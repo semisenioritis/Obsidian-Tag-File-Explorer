@@ -338,9 +338,9 @@ class MyPopupModal extends Modal {
     }
 
     onClose() {
-        const { contentEl } = this;
-        contentEl.empty(); // Clear the content when the modal is closed
+        this.$modal_content.empty(); // Clear the content when the modal is closed
     }
+
     setup(){
         this.$modal_wrapper.style.width = "100%";
         this.$modal_wrapper.style.height = "100%";
