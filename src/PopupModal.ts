@@ -24,14 +24,335 @@ type FileDetails = {
     modified: Date | null;
 };
 
+interface ButtonConfig {
+    className: string,
+    icon: string,
+    onClick: (this: GlobalEventHandlers, ev: MouseEvent) => void;
+
+}
+
 // Define the Modal for the popup
 class MyPopupModal extends Modal {
-  constructor(app: App) {
-    super(app);
-  }
+    $modal_wrapper: HTMLElement;
+    $modal_content: HTMLElement;
+    $close_button: HTMLElement | null | undefined;
+    constructor(app: App) {
+        super(app);
+    }
+
+    // many of my views individually have multiple pages that coexist in the same locations.
+    // i want to learn how to allow them to exists parallelly in the same location programatically
+    // i also want to learn how drag and drop stuff functions and how it is implemented	  
+
+    // after this i will be refactoring the entire visual chunking and sectioning of the modal.
+    // currently its in a proof of concept, barly works kinda state. 
+    // 	  if i want to implement the multi page section issue adn stuff in this  plugin, then i need a better and smoother more object oriented ui
+
+    //  also need to update the codebase structure file in obsidian
+
+    // create folder and view buttons
+    async onOpen() {
+        // const { contentEl } = this;
+        this.$modal_wrapper = this.modalEl;
+        this.$modal_content = this.contentEl;
+        this.$close_button = this.$modal_wrapper.querySelector('.modal-close-button')?.parentElement
+
+        this.setup()
+        // Create a custom button and add it beside the close button
+        const me = this
+        const buttons_beside_close = [{
+            "className": "refresh-header-button",
+            "onClick": async function(){
+                const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+                // Get the text content and remove the "home/" prefix if it exists
+                const tagPath = container.textContent?.replace(/^home\//, "") || "";
+                me.renderFileExplorer.call(me, tagPath);
+
+                var tagsTree = await me.finalCompleteTree(me.app);
+                me.renderFileTreeInModal(tagsTree);
+            },
+            "icon": "rotate-ccw"
+            },{
+            "className": "home-header-button",
+            "icon": "house",
+            "onClick": async function(){
+                // Call the renderFileExplorer method with the tagPath
+                me.renderFileExplorer.call(me, "");
+
+                var tagsTree = await me.finalCompleteTree(me.app);
+                me.renderFileTreeInModal(tagsTree);
+            }
+        }]
+
+        buttons_beside_close.forEach((b) => {
+            me.makeButton(me.$modal_wrapper, b)
+        })
+
+        // Set up flex container to hold two columns
+        this.$modal_content.style.display = "flex";
+        this.$modal_content.style.flexDirection = "row";
+        this.$modal_content.classList.add("blocks");
+
+        // Create the left (3x width) column
+        const leftColumn = this.$modal_content.createDiv();
+        leftColumn.classList.add("rect_border");
+        leftColumn.style.flex = "3";  // 3 parts of the ratio
+
+
+        // Create the right (1x width) column
+        const rightColumn = this.$modal_content.createDiv();
+        rightColumn.classList.add("rect_border");
+        rightColumn.style.flex = "1";  // 1 part of the ratio
 
 
 
+        // Inside the leftColumn definition
+        rightColumn.style.display = "flex";
+        rightColumn.classList.add("blocks");
+        rightColumn.style.flexDirection = "column";
+
+        // Create the top section (thin)
+        const topSection_right = rightColumn.createDiv();
+        topSection_right.classList.add("rect_border");
+        topSection_right.style.height = "var(--size-height)"; // Fixed height for the top section
+        // topSection_right.createEl("span", { text: "Search..." });
+
+
+
+        // Create the mid section (thin)
+        const midSection_right = rightColumn.createDiv();
+        midSection_right.classList.add("rect_border");
+        midSection_right.style.flex = "3"; // Fixed height for the top section
+        midSection_right.createEl("span", { text: "Description" });
+        midSection_right.classList.add("description");
+
+
+
+
+
+
+
+
+
+
+        // Create the bottom section (flexible height)
+        const bottomSection_right = rightColumn.createDiv();
+        bottomSection_right.classList.add("rect_border");
+        bottomSection_right.style.flex = "1"; // Takes the remaining height
+        bottomSection_right.createEl("span", { text: "Legend" });
+        bottomSection_right.classList.add("legend");
+
+
+
+
+        // Inside the leftColumn definition
+        leftColumn.style.display = "flex";
+        leftColumn.style.flexDirection = "column";
+
+        // Create the top section (thin)
+        const topSection = leftColumn.createDiv();
+        topSection.classList.add("rect_border");
+
+        
+        topSection.style.height = "var(--size-height)"; // Fixed height for the top section
+        topSection.style.display = "flex"; // Set display to flex for the top section
+        
+
+        
+        // topSection.createEl("span", { text: "File Path" });
+
+
+
+        const addressOfLocation = topSection.createDiv();
+        addressOfLocation.classList.add("tag_path_identifier");
+
+        const backupButton = topSection.createDiv();
+        backupButton.classList.add("backup-button");
+        setIcon(backupButton, "folder-output");
+
+        backupButton?.addEventListener("click", async () => {
+            
+        
+            const container = document.querySelector(".tag_path_identifier") as HTMLElement;
+            // Get the text content and remove the "home/" prefix if it exists
+            this.moveToParent();		
+
+        });
+
+
+
+
+
+
+
+        // Create the bottom section (flexible height)
+        const bottomSection = leftColumn.createDiv();
+        bottomSection.classList.add("rect_border");
+        bottomSection.style.flex = "1"; // Takes the remaining height
+
+
+
+
+
+        // Inside the bottomSection definition
+        bottomSection.style.display = "flex"; // Set display to flex for the bottom section
+        bottomSection.style.flexDirection = "row"; // Arrange children in a row
+        bottomSection.classList.add("blocks");
+
+        // Create the left (1x width) column of the bottom section
+        const leftBottomColumn = bottomSection.createDiv();
+        leftBottomColumn.classList.add("rect_border");
+        leftBottomColumn.style.flex = "1"; // 1 part of the ratio
+
+        // Create the right (3x width) column of the bottom section
+        const rightBottomColumn = bottomSection.createDiv();
+        rightBottomColumn.classList.add("rect_border");
+        rightBottomColumn.style.flex = "3"; // 3 parts of the ratio
+
+
+        // Inside the leftColumn definition
+        leftBottomColumn.style.display = "flex";
+        leftBottomColumn.style.flexDirection = "column";
+        leftBottomColumn.classList.add("blocks");
+
+        // Create the top section (thin)
+        const topSection_of_left_bottom = leftBottomColumn.createDiv();
+        topSection_of_left_bottom.classList.add("rect_border");
+        topSection_of_left_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+        topSection_of_left_bottom.createEl("span", { text: "Sort system" });
+
+
+
+        // Create the bottom section (flexible height)
+        
+        const bottomSection_of_left_bottom = leftBottomColumn.createEl("div", { cls: "file-tree-container" });
+        bottomSection_of_left_bottom.classList.add("rect_border");
+        bottomSection_of_left_bottom.style.flex = "1"; // Takes the remaining height
+        bottomSection_of_left_bottom.createEl("span", { text: "File hierarchy tree" });
+        
+
+
+
+        // Inside the leftColumn definition
+        rightBottomColumn.style.display = "flex";
+        rightBottomColumn.style.flexDirection = "column";
+        rightBottomColumn.classList.add("blocks");
+
+        // Create the top section (thin)
+        const topSection_of_right_bottom = rightBottomColumn.createDiv();
+        topSection_of_right_bottom.classList.add("rect_border");
+        topSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+        topSection_of_right_bottom.createEl("span", { text: "Tabs and open folders" });
+
+
+        // Create the mid section (thin)
+        const midSection_of_right_bottom = rightBottomColumn.createDiv();
+        midSection_of_right_bottom.classList.add("rect_border");
+        midSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
+        midSection_of_right_bottom.createEl("span", { text: "Actions in current folder" });
+
+
+
+        // Create the bottom section (flexible height)
+        const bottomSection_of_right_bottom = rightBottomColumn.createEl("div", { cls: "" });
+        bottomSection_of_right_bottom.classList.add("rect_border");
+        bottomSection_of_right_bottom.classList.add("file_exp");
+        bottomSection_of_right_bottom.style.flex = "1"; // Takes the remaining height
+        var main_view_container = bottomSection_of_right_bottom.createEl("div", { cls: "file-explorer-container" });
+        // bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
+
+
+
+
+
+
+
+
+        const searchContainer = topSection_right.createDiv({ cls: 'search-container' });
+        const searchInput = searchContainer.createEl('input', {
+            type: 'text',
+            placeholder: 'Search files...',
+        });
+        const resultsContainer = searchContainer.createDiv({ cls: 'results-container' });
+        resultsContainer.style.display = 'none'; // Hide by default
+
+
+
+        searchInput.addEventListener('input', async (event) => {
+            const query = (event.target as HTMLInputElement).value.toLowerCase();
+            
+            resultsContainer.empty(); // Clear previous results
+
+            // Toggle visibility of results container based on query
+            resultsContainer.style.display = query ? 'block' : 'none';
+            
+            if (query) {
+                const files = this.app.vault.getFiles();
+                const matchedFiles = files.filter(file => file.name.toLowerCase().includes(query));
+                
+                matchedFiles.forEach(file => {
+                    const fileItem = resultsContainer.createEl('div', { cls: 'result-item', text: file.name });
+                    fileItem.addEventListener('click', () => {
+                        console.log(`Selected file: ${file.name}`);
+                        // You can add functionality to open or preview the file here
+                        // TODO: Add functionality to open the parent of the clicked file
+                    });
+                });
+            }
+        });
+
+
+
+        // const rootStructure = this.getFolderStructure(this.app.vault.getRoot());
+        // console.log(JSON.stringify(rootStructure, null, 2));  
+
+
+        // var tagsTree = this.generateFinalTagsStructure(this.app);
+
+        // console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
+        // testing this function 
+        // this.folderMetadataFileCreation("tree/foreign/super/test/another/please/tree"); // Create the metadata files for the home path
+        
+
+
+        // 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
+        var betterTagsTree =  await this.finalCompleteTree(this.app);
+        console.log("Better Tags Tree:", JSON.stringify(betterTagsTree, null, 2));
+
+        // this.renderFileTreeInModal(tagsTree);
+        this.renderFileTreeInModal(betterTagsTree);
+
+
+
+        // const ttagContents = this.getDirectChildrenForTagPath("", this.app);
+        // console.log("Direct Children:", JSON.stringify(ttagContents, null, 2));
+
+
+
+
+
+        const hometagPath = ""; // You can modify this as needed or use an input field
+
+        // Call the renderFileExplorer method with the tagPath
+        this.renderFileExplorer.call(this, hometagPath);
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty(); // Clear the content when the modal is closed
+    }
+    setup(){
+        this.$modal_wrapper.style.width = "100%";
+        this.$modal_wrapper.style.height = "100%";
+        this.$modal_wrapper.classList.add("explorer-modal")
+    }
+
+    makeButton(parent: HTMLElement, config:ButtonConfig){
+        let button  = parent.createDiv()
+        button.classList.add(config.className)
+        setIcon(button, config.icon)
+        button.onclick = config.onClick
+    }
 	// Recursive function to get the entire folder structure with children as an array
 	// 🟣🟣🟣🟣🟣🟣🟣This function creates the structure of the physical folder structure
 	getFolderStructure(folder: TFolder): { name: string; children: any[]; files: string[] } {
@@ -809,360 +1130,7 @@ class MyPopupModal extends Modal {
 	  }
 	  
 
-// many of my views individually have multiple pages that coexist in the same locations.
-// i want to learn how to allow them to exists parallelly in the same location programatically
-// i also want to learn how drag and drop stuff functions and how it is implemented	  
 
-// after this i will be refactoring the entire visual chunking and sectioning of the modal.
-// currently its in a proof of concept, barly works kinda state. 
-// 	  if i want to implement the multi page section issue adn stuff in this  plugin, then i need a better and smoother more object oriented ui
-
-//  also need to update the codebase structure file in obsidian
-
-// create folder and view buttons
-
-
-
-
-	  
-  async onOpen() {
-    // const { contentEl } = this;
-	const { modalEl, contentEl } = this;
-	modalEl.style.width = "100%";
-	modalEl.style.height = "100%";
-	modalEl.classList.add("explorer-modal")
-
-
-
-	// Create a custom button and add it beside the close button
-	const headerEl = modalEl.querySelector('.modal-close-button')?.parentElement;
-
-	const refreshButton = headerEl?.createDiv();
-	refreshButton?.classList.add("refresh-header-button");
-
-	if (refreshButton) {
-		setIcon(refreshButton, "rotate-ccw");
-	}
-
-	const homeButton = headerEl?.createDiv();
-	homeButton?.classList.add("home-header-button");
-
-	if (homeButton) {
-		setIcon(homeButton, "house");
-	}
-
-	// Define the functionality for the custom button
-	refreshButton?.addEventListener("click", async () => {
-		
-	
-		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
-		// Get the text content and remove the "home/" prefix if it exists
-		const tagPath = container.textContent?.replace(/^home\//, "") || "";
-		this.renderFileExplorer.call(this, tagPath);
-
-		var tagsTree = await this.finalCompleteTree(this.app);
-		this.renderFileTreeInModal(tagsTree);
-
-	});
-
-	// Define the functionality for the custom button
-	homeButton?.addEventListener("click", async () => {
-		
-
-		// Call the renderFileExplorer method with the tagPath
-		this.renderFileExplorer.call(this, "");
-
-		var tagsTree = await this.finalCompleteTree(this.app);
-		this.renderFileTreeInModal(tagsTree);
-	});
-
-
-
-
-
-
-
-	
-	// Set up flex container to hold two columns
-	contentEl.style.display = "flex";
-	contentEl.style.flexDirection = "row";
-	contentEl.classList.add("blocks");
-
-	// Create the left (3x width) column
-	const leftColumn = contentEl.createDiv();
-	leftColumn.classList.add("rect_border");
-	leftColumn.style.flex = "3";  // 3 parts of the ratio
-
-
-	// Create the right (1x width) column
-	const rightColumn = contentEl.createDiv();
-	rightColumn.classList.add("rect_border");
-	rightColumn.style.flex = "1";  // 1 part of the ratio
-
-
-
-	// Inside the leftColumn definition
-	rightColumn.style.display = "flex";
-	rightColumn.classList.add("blocks");
-	rightColumn.style.flexDirection = "column";
-
-	// Create the top section (thin)
-	const topSection_right = rightColumn.createDiv();
-	topSection_right.classList.add("rect_border");
-	topSection_right.style.height = "var(--size-height)"; // Fixed height for the top section
-	// topSection_right.createEl("span", { text: "Search..." });
-
-
-
-	// Create the mid section (thin)
-	const midSection_right = rightColumn.createDiv();
-	midSection_right.classList.add("rect_border");
-	midSection_right.style.flex = "3"; // Fixed height for the top section
-	midSection_right.createEl("span", { text: "Description" });
-	midSection_right.classList.add("description");
-
-
-
-
-
-
-
-
-
-
-	// Create the bottom section (flexible height)
-	const bottomSection_right = rightColumn.createDiv();
-	bottomSection_right.classList.add("rect_border");
-	bottomSection_right.style.flex = "1"; // Takes the remaining height
-	bottomSection_right.createEl("span", { text: "Legend" });
-	bottomSection_right.classList.add("legend");
-
-
-
-
-	// Inside the leftColumn definition
-	leftColumn.style.display = "flex";
-	leftColumn.style.flexDirection = "column";
-
-	// Create the top section (thin)
-	const topSection = leftColumn.createDiv();
-	topSection.classList.add("rect_border");
-
-	
-	topSection.style.height = "var(--size-height)"; // Fixed height for the top section
-	topSection.style.display = "flex"; // Set display to flex for the top section
-	
-
-	
-	// topSection.createEl("span", { text: "File Path" });
-
-
-
-	const addressOfLocation = topSection.createDiv();
-	addressOfLocation.classList.add("tag_path_identifier");
-
-	const backupButton = topSection.createDiv();
-	backupButton.classList.add("backup-button");
-	setIcon(backupButton, "folder-output");
-
-	backupButton?.addEventListener("click", async () => {
-		
-	
-		const container = document.querySelector(".tag_path_identifier") as HTMLElement;
-		// Get the text content and remove the "home/" prefix if it exists
-		this.moveToParent();		
-
-	});
-
-
-
-
-
-
-
-	// Create the bottom section (flexible height)
-	const bottomSection = leftColumn.createDiv();
-	bottomSection.classList.add("rect_border");
-	bottomSection.style.flex = "1"; // Takes the remaining height
-
-
-
-
-
-	// Inside the bottomSection definition
-	bottomSection.style.display = "flex"; // Set display to flex for the bottom section
-	bottomSection.style.flexDirection = "row"; // Arrange children in a row
-	bottomSection.classList.add("blocks");
-
-	// Create the left (1x width) column of the bottom section
-	const leftBottomColumn = bottomSection.createDiv();
-	leftBottomColumn.classList.add("rect_border");
-	leftBottomColumn.style.flex = "1"; // 1 part of the ratio
-
-	// Create the right (3x width) column of the bottom section
-	const rightBottomColumn = bottomSection.createDiv();
-	rightBottomColumn.classList.add("rect_border");
-	rightBottomColumn.style.flex = "3"; // 3 parts of the ratio
-
-
-	// Inside the leftColumn definition
-	leftBottomColumn.style.display = "flex";
-	leftBottomColumn.style.flexDirection = "column";
-	leftBottomColumn.classList.add("blocks");
-
-	// Create the top section (thin)
-	const topSection_of_left_bottom = leftBottomColumn.createDiv();
-	topSection_of_left_bottom.classList.add("rect_border");
-	topSection_of_left_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-	topSection_of_left_bottom.createEl("span", { text: "Sort system" });
-
-
-
-	// Create the bottom section (flexible height)
-	
-	const bottomSection_of_left_bottom = leftBottomColumn.createEl("div", { cls: "file-tree-container" });
-	bottomSection_of_left_bottom.classList.add("rect_border");
-	bottomSection_of_left_bottom.style.flex = "1"; // Takes the remaining height
-	bottomSection_of_left_bottom.createEl("span", { text: "File hierarchy tree" });
-	
-
-
-
-	// Inside the leftColumn definition
-	rightBottomColumn.style.display = "flex";
-	rightBottomColumn.style.flexDirection = "column";
-	rightBottomColumn.classList.add("blocks");
-
-	// Create the top section (thin)
-	const topSection_of_right_bottom = rightBottomColumn.createDiv();
-	topSection_of_right_bottom.classList.add("rect_border");
-	topSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-	topSection_of_right_bottom.createEl("span", { text: "Tabs and open folders" });
-
-
-	// Create the mid section (thin)
-	const midSection_of_right_bottom = rightBottomColumn.createDiv();
-	midSection_of_right_bottom.classList.add("rect_border");
-	midSection_of_right_bottom.style.height = "var(--size-height)"; // Fixed height for the top section
-	midSection_of_right_bottom.createEl("span", { text: "Actions in current folder" });
-
-
-
-	// Create the bottom section (flexible height)
-	const bottomSection_of_right_bottom = rightBottomColumn.createEl("div", { cls: "" });
-	bottomSection_of_right_bottom.classList.add("rect_border");
-	bottomSection_of_right_bottom.classList.add("file_exp");
-	bottomSection_of_right_bottom.style.flex = "1"; // Takes the remaining height
-	var main_view_container = bottomSection_of_right_bottom.createEl("div", { cls: "file-explorer-container" });
-	// bottomSection_of_right_bottom.createEl("span", { text: "Contents of the current folder" });
-
-
-
-
-
-
-
-
-	const searchContainer = topSection_right.createDiv({ cls: 'search-container' });
-	const searchInput = searchContainer.createEl('input', {
-		type: 'text',
-		placeholder: 'Search files...',
-	});
-	const resultsContainer = searchContainer.createDiv({ cls: 'results-container' });
-	resultsContainer.style.display = 'none'; // Hide by default
-
-
-
-	searchInput.addEventListener('input', async (event) => {
-		const query = (event.target as HTMLInputElement).value.toLowerCase();
-		
-		resultsContainer.empty(); // Clear previous results
-
-		// Toggle visibility of results container based on query
-		resultsContainer.style.display = query ? 'block' : 'none';
-		
-		if (query) {
-			const files = this.app.vault.getFiles();
-			const matchedFiles = files.filter(file => file.name.toLowerCase().includes(query));
-			
-			matchedFiles.forEach(file => {
-				const fileItem = resultsContainer.createEl('div', { cls: 'result-item', text: file.name });
-				fileItem.addEventListener('click', () => {
-					console.log(`Selected file: ${file.name}`);
-					// You can add functionality to open or preview the file here
-					// TODO: Add functionality to open the parent of the clicked file
-				});
-			});
-		}
-	});
-
-
-
-	// const rootStructure = this.getFolderStructure(this.app.vault.getRoot());
-	// console.log(JSON.stringify(rootStructure, null, 2));  
-
-
-	// var tagsTree = this.generateFinalTagsStructure(this.app);
-
-	// console.log("Tags Tree:", JSON.stringify(tagsTree, null, 2));
-	// testing this function 
-	// this.folderMetadataFileCreation("tree/foreign/super/test/another/please/tree"); // Create the metadata files for the home path
-	
-
-
-	// 🔴🔴🔴🔴🔴🔴🔴 make this a global variable
-	var betterTagsTree =  await this.finalCompleteTree(this.app);
-	console.log("Better Tags Tree:", JSON.stringify(betterTagsTree, null, 2));
-
-	// this.renderFileTreeInModal(tagsTree);
-	this.renderFileTreeInModal(betterTagsTree);
-
-
-
-	// const ttagContents = this.getDirectChildrenForTagPath("", this.app);
-	// console.log("Direct Children:", JSON.stringify(ttagContents, null, 2));
-
-
-
-
-
-	const hometagPath = ""; // You can modify this as needed or use an input field
-
-	// Call the renderFileExplorer method with the tagPath
-	this.renderFileExplorer.call(this, hometagPath);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  }
-
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty(); // Clear the content when the modal is closed
-  }
 }
 
 export default MyPopupModal
